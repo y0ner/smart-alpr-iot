@@ -62,3 +62,6 @@ runs/
 *.mp4
 *.avi
 *.log
+
+# Engram local config
+.engram/
