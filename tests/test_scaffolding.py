@@ -86,7 +86,7 @@ def test_plate_validator_basic() -> None:
 
 def test_image_preprocessor_dummy() -> None:
     """Verifica que el preprocesador OpenCV responda a una matriz sintética."""
-    preprocessor = ImagePreprocessor()
+    preprocessor = ImagePreprocessor(scale_factor=1.0)
     dummy_img = np.zeros((100, 200, 3), dtype=np.uint8)
     dummy_img[20:80, 20:180] = 255
 
