@@ -63,5 +63,10 @@ runs/
 *.avi
 *.log
 
+# SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
 # Engram local config
 .engram/

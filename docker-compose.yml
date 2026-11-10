@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  smart-alpr:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart_alpr_iot_console
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - STREAMLIT_SERVER_HEADLESS=true
+    volumes:
+      - ./data:/app/data
+      - ./db:/app/db
+      - ./models:/app/models
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
