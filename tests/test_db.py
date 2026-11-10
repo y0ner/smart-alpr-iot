@@ -122,20 +122,21 @@ def test_permanencia_corta_minutos_unicamente(db: DatabaseManager) -> None:
 
 def test_vehiculos_en_parqueadero_y_ocupacion(db: DatabaseManager) -> None:
     """Verifica el listado de vehículos activos dentro del parqueadero y KPIs."""
+    t_now = datetime.now()
     # Ingreso de un Carro y una Moto
     db.registrar_acceso(
         "CAR001",
         "CARRO",
         confianza=0.92,
         sentido="ENTRADA",
-        momento=datetime(2026, 11, 9, 7, 0, 0),
+        momento=t_now,
     )
     db.registrar_acceso(
         "MOT001",
         "MOTO",
         confianza=0.89,
         sentido="ENTRADA",
-        momento=datetime(2026, 11, 9, 7, 30, 0),
+        momento=t_now,
     )
 
     dentro = db.get_vehiculos_en_parqueadero()
@@ -150,7 +151,7 @@ def test_vehiculos_en_parqueadero_y_ocupacion(db: DatabaseManager) -> None:
         "CARRO",
         confianza=0.95,
         sentido="SALIDA",
-        momento=datetime(2026, 11, 9, 8, 30, 0),
+        momento=t_now,
     )
 
     dentro_post = db.get_vehiculos_en_parqueadero()
