@@ -5,6 +5,7 @@ la extracción óptica con EasyOCR, el validador heurístico colombiano, el buff
 votación temporal multi-cuadro y la persistencia transaccional en SQLite.
 """
 
+import re
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -208,15 +209,15 @@ class ALPRPipeline:
                     )
                 )
 
-        # Si no detectó contornos complejos y el cuadro es pequeño (ej. un recorte directo de placa)
-        if not boxes and (w_img < 450 and h_img < 250):
+        # Si no detectó contornos complejos (ej. foto directa o recorte de matrícula)
+        if not boxes:
             boxes.append(
                 DetectionBBox(
                     x1=0,
                     y1=0,
                     x2=w_img,
                     y2=h_img,
-                    confidence=0.90,
+                    confidence=0.85,
                 )
             )
 
@@ -235,12 +236,35 @@ class ALPRPipeline:
         if not results:
             return "", 0.0
 
-        # Unir fragmentos ordenados horizontalmente por posición x
+        # 1. Probar fragmentos individuales ordenados por confianza
+        # En placas reales, la matrícula y el municipio ('BOGOTA', 'MEDELLIN') vienen separados
+        for item in sorted(results, key=lambda x: -x[2]):
+            text_snippet = item[1].strip().upper()
+            cleaned = PlateValidator.clean_text(text_snippet)
+            val = PlateValidator.correct_and_validate(cleaned)
+            if val.is_valid:
+                return val.corrected_plate, round(float(item[2]), 4)
+
+        # 2. Probar combinación secuencial de fragmentos ordenados horizontalmente
         sorted_results = sorted(results, key=lambda item: item[0][0][0])
         extracted_text = "".join(item[1] for item in sorted_results)
-        # Confianza promedio de los caracteres detectados
-        mean_conf = sum(float(item[2]) for item in sorted_results) / len(sorted_results)
+        cleaned_joined = PlateValidator.clean_text(extracted_text)
+        val_joined = PlateValidator.correct_and_validate(cleaned_joined)
+        if val_joined.is_valid:
+            mean_conf = sum(float(item[2]) for item in sorted_results) / len(sorted_results)
+            return val_joined.corrected_plate, round(mean_conf, 4)
 
+        # 3. Buscar subcadena de 6 caracteres que satisfaga el patrón colombiano
+        match = re.search(r"[A-Z0-9]{6}", cleaned_joined)
+        if match:
+            candidate = match.group(0)
+            val_match = PlateValidator.correct_and_validate(candidate)
+            if val_match.is_valid:
+                mean_conf = sum(float(item[2]) for item in sorted_results) / len(sorted_results)
+                return val_match.corrected_plate, round(mean_conf, 4)
+
+        # Fallback estándar si no coincide con sintaxis estricta
+        mean_conf = sum(float(item[2]) for item in sorted_results) / len(sorted_results)
         return extracted_text.strip().upper(), round(mean_conf, 4)
 
     def process_frame(

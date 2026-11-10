@@ -5,6 +5,7 @@ auditoría de base de datos relacional y laboratorio del Reto Extra A/B.
 Diseñado conforme al estándar anti-AI slop (.agents/rules/industrial-ui-standard.md).
 """
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -228,13 +229,18 @@ def view_live_operation(pipeline: ALPRPipeline) -> None:
 
         source_type = st.radio(
             "Seleccionar Entrada:",
-            ["Muestras de Prueba (1-Click)", "Cargar Imagen", "Cámara Web Local"],
+            [
+                "Muestras de Tráfico (1-Click)",
+                "Placas Reales Descargadas (1-Click)",
+                "Cargar Imagen desde Archivo",
+                "Cámara Web Local",
+            ],
             index=0,
         )
 
         selected_frame: NDArray[np.uint8] | None = None
 
-        if source_type == "Muestras de Prueba (1-Click)":
+        if source_type == "Muestras de Tráfico (1-Click)":
             sample_choice = st.selectbox(
                 "Seleccionar Muestra de Tráfico:",
                 [
@@ -267,7 +273,31 @@ def view_live_operation(pipeline: ALPRPipeline) -> None:
             cv2.circle(canvas, (x2 - 12, y1 + 12), 3, (30, 30, 30), -1)
             selected_frame = canvas
 
-        elif source_type == "Cargar Imagen":
+        elif source_type == "Placas Reales Descargadas (1-Click)":
+            real_samples_dir = BASE_DIR / "data" / "samples" / "placas_de_prueba"
+            available_files = (
+                sorted([
+                    f
+                    for f in os.listdir(real_samples_dir)
+                    if f.lower().endswith((".jpg", ".png", ".jpeg"))
+                ])
+                if real_samples_dir.exists()
+                else []
+            )
+            if available_files:
+                file_choice = st.selectbox(
+                    "Seleccionar Placa Real Descargada:",
+                    available_files,
+                    index=0,
+                )
+                img_path = str(real_samples_dir / file_choice)
+                selected_frame = cv2.imread(img_path)
+                st.caption(f"📁 Ruta: `~/Desktop/placas_de_prueba/{file_choice}`")
+            else:
+                st.warning("No se encontraron placas en el directorio de pruebas.")
+
+        elif source_type == "Cargar Imagen desde Archivo":
+            st.caption("💡 *Tip: Puedes seleccionar cualquier imagen de `~/Desktop/placas_de_prueba/`*")
             uploaded = st.file_uploader(
                 "Subir archivo de imagen (JPG/PNG)", type=["jpg", "jpeg", "png"]
             )
