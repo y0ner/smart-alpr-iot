@@ -1,3 +1,5 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
+
 # Core Vision & AI
 ultralytics>=8.3.0
 opencv-python>=4.10.0
