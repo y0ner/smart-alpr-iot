@@ -1,4 +1,10 @@
-# Smart ALPR IoT 🚗🔍📡
+<div align="center">
+
+![Smart ALPR IoT Banner](https://capsule-render.vercel.app/api?type=waving&color=1e293b&height=250&section=header&text=Smart%20ALPR%20IoT&fontSize=80&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Lectura%20de%20placas%20vehiculares%20con%20visi%C3%B3n%20artificial%20e%20IoT&descAlignY=55&descSize=20)
+
+[![Estado del Proyecto](https://img.shields.io/badge/Estado-Activo-success?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
+[![Mantenimiento](https://img.shields.io/badge/Mantenimiento-Continuo-blue?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
+[![Stack](https://img.shields.io/badge/Stack-Python%20%C2%B7%20YOLO%20%C2%B7%20EasyOCR-orange?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12.3-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![OpenCV](https://img.shields.io/badge/OpenCV-4.10.0-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
@@ -8,6 +14,8 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Code Style](https://img.shields.io/badge/Linter-Ruff-black)](https://astral.sh/ruff)
 [![Tests](https://img.shields.io/badge/Pytest-60%2F60%20Passing-10B981?logo=pytest&logoColor=white)](https://docs.pytest.org/)
+
+</div>
 
 > **Sistema Inteligente de Lectura y Reconocimiento de Placas Vehiculares (ALPR / ANPR) con Control de Acceso y Tiempo de Permanencia en Tiempo Real**  
 > *Proyecto Final #4 — Visión Artificial*  
@@ -66,7 +74,8 @@ smart-alpr-iot/
 ├── data/                             # Repositorio de datos estructurados
 │   ├── processed/                    # Capturas procesadas con evidencia fotográfica
 │   ├── raw/                          # Muestras crudas de video y cámaras
-│   └── samples/                      # Muestras sintéticas y de prueba para benchmark
+│   └── samples/                      # Muestras sintéticas y placas reales de prueba
+│       └── placas_de_prueba/         # Lote de matrículas colombianas descargadas
 ├── db/                               # Persistencia y esquema relacional
 │   ├── schema.sql                    # Definición DDL de tablas e índices SQLite
 │   └── smart_alpr.db                 # Base de datos operativa en producción
@@ -221,6 +230,7 @@ La interfaz desarrollada en `src/app.py` dispone de 3 consolas operativas:
 1. **🔴 MONITOREO PERIMETRAL EN VIVO:**
    - Visualizador de cámara con telemetría sobreimpresa (FPS, Timestamp UTC, Latencia del pipeline en milisegundos).
    - Renderizador dinámico de **placa vehicular con estética física colombiana** (chapa amarilla reflectiva, borde negro perimetral y tornillos de fijación).
+   - Selector directo 1-Click de **placas reales colombianas descargadas** (Medellín, Bogotá, Cartagena, Dosquebradas, Sonsón, etc.).
    - **Comparador visual del pipeline morfológico de 5 etapas:** Original $\to$ Grises $\to$ Filtro Bilateral $\to$ Binarización Adaptativa $\to$ Morfología / Deskewing.
 2. **📋 AUDITORÍA Y CONTROL DE ACCESO:**
    - KPIs de aforo en vivo: Vehículos actualmente en parqueadero, tiempo promedio de estadía, aforo ocupado vs capacidad instalada (420 cupos).
@@ -243,14 +253,14 @@ La interfaz desarrollada en `src/app.py` dispone de 3 consolas operativas:
 
 ---
 
-## 👥 Equipo y Créditos Académicos
+## 👥 Autor y Créditos Académicos
 
+* **Autor / Desarrollador Líder:** Yoner Isaza ([@y0ner](https://github.com/y0ner))
 * **Institución:** Universidad de La Guajira (Uniguajira)
 * **Facultad:** Facultad de Ingeniería
 * **Programa:** Ingeniería de Sistemas
 * **Asignatura:** Visión Artificial
 * **Docente Titular:** Ing. Carlos Redondo
-* **Estudiante / Desarrollador Líder:** Yoner (Ingeniería de Sistemas)
 * **Semestre:** 2024-II / 2026
 
 ---
@@ -258,3 +268,9 @@ La interfaz desarrollada en `src/app.py` dispone de 3 consolas operativas:
 ## 📄 Licencia
 
 Este proyecto se distribuye bajo la licencia **MIT**. Consulte el archivo `LICENSE` para más detalles.
+
+---
+
+<div align="center">
+  <i>Desarrollado y mantenido con estándares de calidad técnica por <a href="https://github.com/y0ner">y0ner</a></i>
+</div>
