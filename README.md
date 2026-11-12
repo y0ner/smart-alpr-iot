@@ -1,4 +1,12 @@
-# Smart ALPR IoT 🚗🔍📡
+<div align="center">
+
+![Smart ALPR IoT Banner](https://capsule-render.vercel.app/api?type=waving&color=1e293b&height=250&section=header&text=Smart%20ALPR%20IoT&fontSize=80&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Lectura%20de%20placas%20vehiculares%20con%20visi%C3%B3n%20artificial%20e%20IoT&descAlignY=55&descSize=20)
+
+[![Estado del Proyecto](https://img.shields.io/badge/Estado-Activo-success?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
+[![Mantenimiento](https://img.shields.io/badge/Mantenimiento-Continuo-blue?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
+[![Stack](https://img.shields.io/badge/Stack-Python%20%C2%B7%20YOLO%20%C2%B7%20EasyOCR-orange?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
+
+</div>
 
 > **Sistema Inteligente de Lectura de Placas Vehiculares con Visión Artificial e IoT**  
 > *Proyecto Final — Visión Artificial | Universidad de La Guajira*
@@ -107,3 +115,9 @@ pip install -r requirements.txt
 
 ## 👨‍💻 Autor
 - **Yoner Isaza** ([@y0ner](https://github.com/y0ner))
+
+---
+
+<div align="center">
+  <i>Desarrollado y mantenido con estándares de calidad técnica por <a href="https://github.com/y0ner">y0ner</a></i>
+</div>
