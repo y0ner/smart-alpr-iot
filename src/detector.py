@@ -22,6 +22,7 @@ from src.config import (
     FALLBACK_NMS_IOU,
     OCR_ALLOWLIST,
     OCR_EARLY_STOP_CONFIDENCE,
+    PLATE_CAR_ASPECT_RATIO,
     PROCESSED_DATA_DIR,
     YOLO_CONF_THRESHOLD,
     YOLO_MODEL_PATH,
@@ -223,8 +224,7 @@ class ALPRPipeline:
         x, y, w, h = bbox_xywh
         aspect_ratio = float(w) / float(max(1, h))
         min_ar, max_ar = FALLBACK_ASPECT_RATIO_RANGE
-        # Dimensión física reglamentaria de placa colombiana de automóvil: 33 x 16 cm
-        target_ar = 33.0 / 16.0
+        target_ar = PLATE_CAR_ASPECT_RATIO
         max_dev = max(abs(target_ar - min_ar), abs(max_ar - target_ar), 1e-6)
         aspect_score = max(0.0, 1.0 - abs(aspect_ratio - target_ar) / max_dev)
 
