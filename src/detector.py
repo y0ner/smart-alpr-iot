@@ -16,7 +16,12 @@ import numpy as np
 from numpy.typing import NDArray
 
 from src.config import (
+    FALLBACK_ASPECT_RATIO_RANGE,
+    FALLBACK_MAX_CANDIDATES,
+    FALLBACK_MIN_AREA_PX,
+    FALLBACK_NMS_IOU,
     OCR_ALLOWLIST,
+    OCR_EARLY_STOP_CONFIDENCE,
     PROCESSED_DATA_DIR,
     YOLO_CONF_THRESHOLD,
     YOLO_MODEL_PATH,
@@ -34,7 +39,21 @@ from src.validator import (
 
 @dataclass(frozen=True)
 class DetectionBBox:
-    """Bounding box de una placa detectada en el plano de la imagen."""
+    """Bounding box de una placa detectada en el plano de la imagen.
+
+    Attributes:
+        x1: Coordenada izquierda en píxeles.
+        y1: Coordenada superior en píxeles.
+        x2: Coordenada derecha en píxeles.
+        y2: Coordenada inferior en píxeles.
+        confidence: Probabilidad del detector cuando ``source == "yolo"``.
+            En el detector de respaldo (``source == "respaldo"``) es un puntaje
+            heurístico en [0, 1] calculado sobre la imagen, no una probabilidad;
+            en ``source == "cuadro_completo"`` vale 0.0 porque no hubo detección.
+        class_name: Nombre de la clase detectada.
+        source: Origen de la caja (``"yolo"``, ``"respaldo"`` o
+            ``"cuadro_completo"``).
+    """
 
     x1: int
     y1: int
@@ -42,6 +61,7 @@ class DetectionBBox:
     y2: int
     confidence: float
     class_name: str = "placa"
+    source: str = "yolo"
 
     @property
     def box_xyxy(self) -> tuple[int, int, int, int]:
@@ -182,8 +202,43 @@ class ALPRPipeline:
                     )
             return boxes
 
-        # Fallback de alta precisión por análisis morfológico de placas vehiculares
-        # Las placas colombianas tienen relación de aspecto típica entre 1.8 y 3.5
+        return self._detect_plates_fallback(frame)
+
+    @staticmethod
+    def _score_candidate(
+        contour: NDArray[np.int32],
+        bbox_xywh: tuple[int, int, int, int],
+        thresh_grad: NDArray[np.uint8],
+    ) -> float:
+        """Calcula un puntaje heurístico en [0, 1] para una caja candidata del respaldo.
+
+        La fórmula promedia tres términos normalizados en [0, 1]:
+        1. Cercanía de la relación de aspecto (w / h) a la de una placa
+           colombiana estándar de automóvil (33 x 16 cm -> 2.0625), normalizada
+           respecto a la desviación máxima dentro de ``FALLBACK_ASPECT_RATIO_RANGE``.
+        2. Densidad de bordes verticales: fracción de píxeles activos en el
+           gradiente horizontal umbralizado (``thresh_grad``) dentro de la caja.
+        3. Relleno del contorno: ``cv2.contourArea(contour) / (w * h)``.
+        """
+        x, y, w, h = bbox_xywh
+        aspect_ratio = float(w) / float(max(1, h))
+        min_ar, max_ar = FALLBACK_ASPECT_RATIO_RANGE
+        # Dimensión física reglamentaria de placa colombiana de automóvil: 33 x 16 cm
+        target_ar = 33.0 / 16.0
+        max_dev = max(abs(target_ar - min_ar), abs(max_ar - target_ar), 1e-6)
+        aspect_score = max(0.0, 1.0 - abs(aspect_ratio - target_ar) / max_dev)
+
+        roi_thresh = thresh_grad[y : y + h, x : x + w]
+        edge_density = float(np.count_nonzero(roi_thresh)) / float(max(1, roi_thresh.size))
+
+        box_area = float(max(1, w * h))
+        fill_ratio = min(1.0, max(0.0, float(cv2.contourArea(contour)) / box_area))
+
+        score = (aspect_score + edge_density + fill_ratio) / 3.0
+        return round(min(1.0, max(0.0, score)), 4)
+
+    def _detect_plates_fallback(self, frame: NDArray[np.uint8]) -> list[DetectionBBox]:
+        """Detector de respaldo por gradiente Sobel, cierre morfológico, puntaje y NMS."""
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) if len(frame.shape) == 3 else frame
         grad_x = cv2.Sobel(gray, ddepth=cv2.CV_16S, dx=1, dy=0, ksize=3)
         abs_grad_x = cv2.convertScaleAbs(grad_x)
@@ -196,25 +251,51 @@ class ALPRPipeline:
 
         contours, _ = cv2.findContours(closed, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         h_img, w_img = frame.shape[:2]
+        min_ar, max_ar = FALLBACK_ASPECT_RATIO_RANGE
+
+        rects: list[list[int]] = []
+        scores: list[float] = []
 
         for cnt in contours:
             x, y, w, h = cv2.boundingRect(cnt)
             aspect_ratio = float(w) / float(max(1, h))
             area = w * h
 
-            # Criterios geométricos de placa vehicular
-            if 1.6 <= aspect_ratio <= 4.2 and area >= 1200 and w < w_img * 0.95 and h < h_img * 0.8:
+            # Criterios geométricos de placa vehicular basados en config.py
+            if (
+                min_ar <= aspect_ratio <= max_ar
+                and area >= FALLBACK_MIN_AREA_PX
+                and w < w_img * 0.95
+                and h < h_img * 0.8
+            ):
+                score = self._score_candidate(cnt, (x, y, w, h), thresh)
+                rects.append([x, y, w, h])
+                scores.append(score)
+
+        boxes: list[DetectionBBox] = []
+        if rects:
+            raw_indices = cv2.dnn.NMSBoxes(rects, scores, 0.0, FALLBACK_NMS_IOU)
+            kept_indices = (
+                [int(i) for i in np.asarray(raw_indices).reshape(-1)]
+                if len(raw_indices) > 0
+                else []
+            )
+            for idx in kept_indices:
+                x, y, w, h = rects[idx]
                 boxes.append(
                     DetectionBBox(
                         x1=x,
                         y1=y,
                         x2=x + w,
                         y2=y + h,
-                        confidence=0.85,
+                        confidence=scores[idx],
+                        source="respaldo",
                     )
                 )
+            boxes.sort(key=lambda b: b.confidence, reverse=True)
+            boxes = boxes[:FALLBACK_MAX_CANDIDATES]
 
-        # Si no detectó contornos complejos (ej. foto directa o recorte de matrícula)
+        # Si no hay candidatos válidos, se entrega el cuadro completo con puntaje honesto 0.0
         if not boxes:
             boxes.append(
                 DetectionBBox(
@@ -222,7 +303,8 @@ class ALPRPipeline:
                     y1=0,
                     x2=w_img,
                     y2=h_img,
-                    confidence=0.85,
+                    confidence=0.0,
+                    source="cuadro_completo",
                 )
             )
 
@@ -332,6 +414,10 @@ class ALPRPipeline:
             )
             detections.append(det_res)
 
+            # Parada temprana: no leer más cajas cuando ya hay una lectura válida confiable
+            if validation.is_valid and ocr_conf >= OCR_EARLY_STOP_CONFIDENCE:
+                break
+
         # 5. Votación Temporal Multi-Cuadro
         consensus: ConsensusResult | None = None
         access_record: dict[str, Any] | None = None
@@ -404,7 +490,11 @@ class ALPRPipeline:
             cv2.rectangle(frame, (b.x1, b.y1), (b.x2, b.y2), color, 2)
 
             # Etiqueta sobre fondo oscuro sólido (#11131A)
-            label = f"{det.plate} [{det.vehicle_type}] {det.ocr_confidence:.2f}"
+            plate_text = det.plate or "---"
+            if b.source in ("respaldo", "cuadro_completo"):
+                label = f"{plate_text} [{det.vehicle_type}] respaldo OCR:{det.ocr_confidence:.2f}"
+            else:
+                label = f"{plate_text} [{det.vehicle_type}] {det.ocr_confidence:.2f}"
             (lw, lh), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)
             cv2.rectangle(
                 frame,
