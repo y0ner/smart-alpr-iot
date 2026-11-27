@@ -2,7 +2,7 @@
 
 Compara de manera reproducible el rendimiento de EasyOCR bajo dos condiciones:
 - Modo A (Sin Preprocesamiento): Recorte crudo directo al OCR.
-- Modo B (Con Preprocesamiento OpenCV): Recorte + Grises + Bilateral + Binarización + Morfología.
+- Modo B (Con Preprocesamiento OpenCV): la salida `final_for_ocr` de `src/preprocessor.py`.
 
 Calcula Tasa de Acierto Exacto (%), Tasa de Error de Caracteres (CER),
 Distancia de Levenshtein, confianza media y latencia medida por muestra.
