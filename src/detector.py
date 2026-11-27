@@ -147,6 +147,11 @@ class ALPRPipeline:
             self._ocr_reader = easyocr.Reader(["es"], gpu=self.use_gpu, verbose=False)
         return self._ocr_reader
 
+    @property
+    def yolo_loaded(self) -> bool:
+        """Indica si hay pesos YOLO cargados (si no, se usa el detector de respaldo)."""
+        return self._yolo_model is not None
+
     def is_valid_frame(self, frame: NDArray[np.uint8]) -> bool:
         """Comprueba que el frame sea un arreglo válido de NumPy no vacío."""
         return isinstance(frame, np.ndarray) and frame.size > 0 and len(frame.shape) in (2, 3)
@@ -272,8 +277,19 @@ class ALPRPipeline:
         frame: NDArray[np.uint8],
         timestamp: float | None = None,
         persist_on_consensus: bool = True,
+        voter_buffer: PlateVoterBuffer | None = None,
     ) -> FrameProcessingResult:
-        """Ejecuta el pipeline completo de detección, OCR, validación y persistencia."""
+        """Ejecuta el pipeline completo de detección, OCR, validación y persistencia.
+
+        Args:
+            frame: Cuadro BGR o en escala de grises.
+            timestamp: Marca de tiempo del cuadro (por defecto, la hora actual).
+            persist_on_consensus: Si es False, no guarda captura ni registra el acceso.
+            voter_buffer: Buffer de votación a usar en este cuadro. Permite que cada
+                sesión de la consola tenga su propia votación aunque comparta el
+                pipeline (y los modelos cargados). Por defecto, el del pipeline.
+        """
+        voter = voter_buffer if voter_buffer is not None else self.voter_buffer
         t_start = time.perf_counter()
         t_now = time.time() if timestamp is None else timestamp
 
@@ -325,7 +341,7 @@ class ALPRPipeline:
         if valid_detections:
             # Tomar la lectura con mayor confianza del cuadro actual
             best_det = max(valid_detections, key=lambda d: d.ocr_confidence)
-            consensus = self.voter_buffer.add_observation(
+            consensus = voter.add_observation(
                 raw_text=best_det.plate,
                 confidence=best_det.ocr_confidence,
                 timestamp=t_now,
@@ -435,6 +451,6 @@ class ALPRDetector(ALPRPipeline):
         return {
             "conf_threshold": self.conf_threshold,
             "status": "ready",
-            "yolo_loaded": self._yolo_model is not None,
+            "yolo_loaded": self.yolo_loaded,
             "gpu_enabled": self.use_gpu,
         }
