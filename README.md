@@ -2,6 +2,8 @@
 
 ![Smart ALPR IoT Banner](https://capsule-render.vercel.app/api?type=waving&color=1e293b&height=250&section=header&text=Smart%20ALPR%20IoT&fontSize=80&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Lectura%20de%20placas%20vehiculares%20con%20visi%C3%B3n%20artificial%20e%20IoT&descAlignY=55&descSize=20)
 
+[![Sitio Web](https://img.shields.io/badge/Sitio%20Web-smart--alpr--iot.vercel.app-blue?style=for-the-badge&logo=vercel)](https://smart-alpr-iot.vercel.app)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/y0ner/smart-alpr-iot/blob/main/notebooks/entrenamiento_y_metricas.ipynb)
 [![Estado del Proyecto](https://img.shields.io/badge/Estado-Activo-success?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
 [![Mantenimiento](https://img.shields.io/badge/Mantenimiento-Continuo-blue?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
 [![Stack](https://img.shields.io/badge/Stack-Python%20%C2%B7%20YOLO%20%C2%B7%20EasyOCR-orange?style=for-the-badge)](https://github.com/y0ner/smart-alpr-iot)
@@ -13,13 +15,15 @@
 [![SQLite](https://img.shields.io/badge/SQLite-3.45-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
 [![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![Code Style](https://img.shields.io/badge/Linter-Ruff-black)](https://astral.sh/ruff)
-[![Tests](https://img.shields.io/badge/Pytest-60%2F60%20Passing-10B981?logo=pytest&logoColor=white)](https://docs.pytest.org/)
+[![Tests](https://img.shields.io/badge/Tests-92%20Python%20%2B%2010%20Web%20Passing-10B981?logo=pytest&logoColor=white)](https://github.com/y0ner/smart-alpr-iot)
 
 </div>
 
 > **Sistema Inteligente de Lectura y Reconocimiento de Placas Vehiculares (ALPR / ANPR) con Control de Acceso y Tiempo de Permanencia en Tiempo Real**  
-> *Proyecto Final #4 — Visión Artificial*  
-> *Facultad de Ingeniería — Programa de Ingeniería de Sistemas — Universidad de La Guajira (Riohacha, Colombia)*
+> *Internet de las Cosas, Grupo A3 — Docente: Eduardo Luis Sierra Fragozo*  
+> *Facultad de Ingeniería — Programa de Ingeniería de Sistemas — Universidad de La Guajira (Riohacha, noviembre de 2026)*  
+> *Autores: Yoner De Jesus Isaza Vides y Kerlon Andres Causado Ojeda*  
+> **Sitio Web:** [https://smart-alpr-iot.vercel.app](https://smart-alpr-iot.vercel.app) · **Cuaderno Colab:** [entrenamiento_y_metricas.ipynb](https://colab.research.google.com/github/y0ner/smart-alpr-iot/blob/main/notebooks/entrenamiento_y_metricas.ipynb)
 
 ---
 
@@ -71,15 +75,19 @@ smart-alpr-iot/
 │   └── skills/                       # Skills profesionales integradas
 │       ├── frontend-design/
 │       └── ui-ux-pro-max/
+├── AGENTS.md                         # Manual operativo para agentes de IA en el repositorio
 ├── data/                             # Repositorio de datos estructurados
 │   ├── processed/                    # Capturas procesadas con evidencia fotográfica
 │   ├── raw/                          # Muestras crudas de video y cámaras
 │   └── samples/                      # Muestras sintéticas y placas reales de prueba
 │       └── placas_de_prueba/         # Lote de matrículas colombianas descargadas
+│           └── verdad.csv            # Verdad de referencia etiquetada para benchmark
 ├── db/                               # Persistencia y esquema relacional
 │   ├── schema.sql                    # Definición DDL de tablas e índices SQLite
 │   └── smart_alpr.db                 # Base de datos operativa en producción
 ├── docs/                             # Documentación técnica y académica formal
+│   ├── agentes/                      # Sistema de delegación y briefs de trabajo
+│   │   └── briefs/                   # Especificaciones de tareas por rama
 │   ├── analisis_tecnico_A_E.md       # Secciones A a E completas (Rúbrica oficial 1.2 pts)
 │   ├── ficha_cliente.md              # Contexto de negocio: Viva Wajiira y Uniguajira
 │   ├── Guia_paso_a_paso_proyectos.pdf
@@ -105,8 +113,10 @@ smart-alpr-iot/
 │   ├── test_preprocessor.py         # Pruebas de filtros, morfología y paridad 3x3
 │   ├── test_scaffolding.py          # Pruebas de entorno y estructura de archivos
 │   └── test_validator.py            # Pruebas de sintaxis colombiana y buffer de votación
+├── website/                          # Sitio web estático ES/EN con laboratorio OpenCV.js
 ├── docker-compose.yml                # Orquestación de contenedores Docker
 ├── Dockerfile                        # Imagen base optimizada Debian/Python 3.12
+├── LICENSE                           # Licencia MIT del proyecto
 ├── requirements.txt                  # Dependencias de producción y desarrollo
 ├── run.sh                            # Script bash universal de inicialización
 └── README.md                         # Documentación principal del sistema
@@ -163,10 +173,13 @@ pip install -r requirements.txt
 ### 3. Ejecutar análisis estático y suite de pruebas automatizadas
 ```bash
 # Verificar ausencia de warnings con Ruff
-ruff check src tests
+.venv/bin/ruff check src tests
 
-# Ejecutar los 60 tests unitarios con reporte de cobertura
-pytest -v --cov=src
+# Ejecutar las 92 pruebas unitarias de Python
+.venv/bin/python -m pytest -q tests
+
+# Ejecutar las 10 pruebas del sitio web
+node --test website/tests/*.test.mjs
 ```
 
 ### 4. Lanzar la consola SCADA de telemetría industrial
@@ -178,6 +191,13 @@ pytest -v --cov=src
 streamlit run src/app.py --server.port 8501 --server.address 0.0.0.0
 ```
 Abra su navegador web en `http://localhost:8501`.
+
+### 5. Sitio web estático (laboratorio OpenCV.js)
+Disponible en producción en [https://smart-alpr-iot.vercel.app](https://smart-alpr-iot.vercel.app). Para visualizarlo en local:
+```bash
+cd website && python3 -m http.server 8000
+```
+Abra su navegador web en `http://localhost:8000`.
 
 ---
 
@@ -212,14 +232,24 @@ El repositorio incluye herramientas analíticas de ejecución independiente:
 # 1. Demostración Matemática 3x3 (Sobel Gx manual vs OpenCV filter2D):
 python3 src/math_proof.py
 
-# 2. Evaluación Experimental A/B y Análisis de Sensibilidad YOLO:
-python3 src/benchmark_ab.py
+# 2. Evaluación Experimental A/B:
+python3 -m src.benchmark_ab
 ```
 
-### Resumen de Resultados del Benchmark A/B:
-- **Modo A (Sin Preprocesamiento):** Latencia $254.2\text{ ms}$, alta tasa de error en condiciones de campo con sombras y reflejos solares ($CER = 24.5\%$).
-- **Modo B (Con Pipeline OpenCV):** Latencia $1.60\text{ s}$, **reducción drástica de error a $CER = 2.78\%$** y **$+34.2\%$ de ganancia en tasa de acierto** en escenas reales complejas.
+### Resumen de Resultados del Benchmark A/B (Medición Real)
+
+Conjunto evaluado: 11 fotos de 9 placas distintas en `data/samples/placas_de_prueba` (tres corresponden al mismo vehículo), descargadas de internet (fuente pendiente de citar; no constituyen un conjunto de prueba independiente). Detector evaluado: respaldo por bordes (no hay pesos YOLO).
+
+| Medida | Antes (2026-11-27) | Después, Modo A (recorte sin procesar) | Después, Modo B (con preprocesamiento) |
+|---|---|---|---|
+| Aciertos exactos | 0/11 (pipeline) y 4/11 (recorte ×3) | 6/11 | 6/11 |
+| CER medio | sin medir | 37,88 % | 34,85 % |
+| Tiempo por foto (CPU) | 2,5 – 15,9 s | 1,85 s promedio | 1,20 s promedio (0,4 – 2,2 s) |
+
+*Fuente del "después": reproducible mediante `python -m src.benchmark_ab` (medición 2026-11-28). El tiempo del Modo A incluye la carga de EasyOCR en la primera foto.*
+
 - **Paridad Matemática:** Diferencia absoluta entre la convolución analítica en bucles Python y `cv2.filter2D` = **$0.0 \times 10^0$ (Error Cero)**.
+- **Sensibilidad del Detector YOLO:** Sin medir con datos locales; la curva Precisión/Recall (P/R) real y el análisis de umbral se obtienen desde el cuaderno de Google Colab ([entrenamiento_y_metricas.ipynb](https://colab.research.google.com/github/y0ner/smart-alpr-iot/blob/main/notebooks/entrenamiento_y_metricas.ipynb)) una vez entrenados los pesos del modelo.
 
 ---
 
@@ -253,24 +283,25 @@ La interfaz desarrollada en `src/app.py` dispone de 3 consolas operativas:
 
 ---
 
-## 👥 Autor y Créditos Académicos
+## 👥 Autores y Créditos Académicos
 
-* **Autor / Desarrollador Líder:** Yoner Isaza ([@y0ner](https://github.com/y0ner))
+* **Autores:** Yoner De Jesus Isaza Vides y Kerlon Andres Causado Ojeda
+* **Docente:** Eduardo Luis Sierra Fragozo
+* **Asignatura:** Internet de las Cosas, Grupo A3
 * **Institución:** Universidad de La Guajira (Uniguajira)
 * **Facultad:** Facultad de Ingeniería
 * **Programa:** Ingeniería de Sistemas
-* **Asignatura:** Visión Artificial
-* **Docente Titular:** Ing. Carlos Redondo
-* **Semestre:** 2024-II / 2026
+* **Ubicación y Fecha:** Riohacha, noviembre de 2026
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto se distribuye bajo la licencia **MIT**. Consulte el archivo `LICENSE` para más detalles.
+Licencia MIT: ver [LICENSE](LICENSE).  
+Copyright (c) 2026 Yoner De Jesus Isaza Vides y Kerlon Andres Causado Ojeda.
 
 ---
 
 <div align="center">
-  <i>Desarrollado y mantenido con estándares de calidad técnica por <a href="https://github.com/y0ner">y0ner</a></i>
+  <i>Desarrollado y mantenido con estándares de calidad técnica por Yoner De Jesus Isaza Vides y Kerlon Andres Causado Ojeda</i>
 </div>
