@@ -333,8 +333,8 @@ def run_video_stream(
 def get_alpr_system() -> tuple[DatabaseManager, ALPRPipeline]:
     """Inicializa en memoria compartida el gestor de base de datos y el pipeline ALPR."""
     db = DatabaseManager(db_path=SQLITE_DB_PATH)
-    if not SQLITE_DB_PATH.exists():
-        db.init_db(schema_path=SCHEMA_SQL_PATH)
+    # El esquema usa IF NOT EXISTS: inicializar siempre cubre también un archivo vacío
+    db.init_db(schema_path=SCHEMA_SQL_PATH)
 
     pipeline = ALPRPipeline(
         conf_threshold=YOLO_CONF_THRESHOLD,
