@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title data-i18n="meta.title">Smart ALPR IoT — Reconocimiento de placas vehiculares</title>
+  <meta name="description" content="Sistema de control de acceso vehicular con YOLO, OpenCV, EasyOCR, validación sintáctica colombiana y registro en SQLite. Incluye laboratorio OpenCV.js en el navegador." data-i18n-attr="content:meta.description">
+  <meta property="og:title" content="Smart ALPR IoT — Reconocimiento de placas vehiculares" data-i18n-attr="content:meta.og_title">
+  <meta property="og:description" content="Sistema de control de acceso vehicular con YOLO, OpenCV, EasyOCR, validación sintáctica colombiana y registro en SQLite. Incluye laboratorio OpenCV.js en el navegador." data-i18n-attr="content:meta.description">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="img/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#ECEEF1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#090A0F" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+  <a class="saltar" href="#como-funciona" data-i18n="nav.saltar">Saltar al contenido</a>
+
+  <nav class="nav" data-i18n-attr="aria-label:nav.aria_principal" aria-label="Principal">
+    <div class="wrap">
+      <a class="marca" href="#inicio" data-i18n-attr="aria-label:nav.aria_inicio" aria-label="Smart ALPR IoT, inicio">
+        <span class="marca-placa">ALPR</span>
+        <span class="marca-texto">Smart ALPR IoT</span>
+      </a>
+      <div class="nav-links">
+        <a class="opcional" href="#como-funciona" data-i18n="nav.como_funciona">Cómo funciona</a>
+        <a href="#pruebalo" data-i18n="nav.pruebalo">Pruébalo</a>
+        <a href="#laboratorio" data-i18n="nav.laboratorio">Lab OpenCV</a>
+        <a class="opcional" href="#resultados" data-i18n="nav.resultados">Resultados</a>
+        <a class="opcional" href="#limites" data-i18n="nav.limites">Límites</a>
+        <a href="https://github.com/y0ner/smart-alpr-iot">GitHub</a>
+        <button class="idioma" id="idioma" type="button" data-i18n-attr="aria-label:nav.aria_idioma" aria-label="Cambiar idioma">
+          <span class="lang-opt" data-lang="es">ES</span><span aria-hidden="true"> · </span><span class="lang-opt" data-lang="en">EN</span>
+        </button>
+        <button class="tema" id="tema" type="button" data-i18n-attr="aria-label:nav.aria_tema" aria-label="Cambiar tema">
+          <span class="largo" data-i18n="nav.tema_prefijo">Tema: </span><span id="tema-valor" data-i18n="tema.sistema">sistema</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <header class="portada" id="inicio">
+    <div class="wrap">
+      <p class="etiqueta" data-i18n="portada.etiqueta">Visión artificial · Universidad de La Guajira · Riohacha</p>
+      <div class="placa-escena">
+        <div class="placa" role="img" data-i18n-attr="aria-label:portada.placa_aria" aria-label="Placa amarilla UJR 456 de Riohacha enmarcada por la caja de detección">
+          <span class="tornillo t1" aria-hidden="true"></span><span class="tornillo t2" aria-hidden="true"></span>
+          <span class="ranura r1" aria-hidden="true"></span><span class="ranura r2" aria-hidden="true"></span>
+          <div class="placa-chars" aria-hidden="true">UJR<span class="sello"></span>456</div>
+          <div class="placa-ciudad" aria-hidden="true">RIOHACHA</div>
+        </div>
+        <div class="caja-deteccion" aria-hidden="true">
+          <span class="caja-etiqueta">UJR456 [<span data-i18n="portada.caja_tipo">CARRO</span>] <b data-i18n="portada.caja_estado">válida</b></span>
+        </div>
+      </div>
+      <div class="portada-texto">
+        <h1 data-i18n="portada.titulo">Lee la placa, corrige al OCR y anota la hora de entrada.</h1>
+        <div>
+          <p class="lead" data-i18n="portada.lead">Un sistema de control de acceso para el parqueadero del Centro Comercial Viva Wajiira. Ubica la placa, la limpia con OpenCV, la lee con EasyOCR, la valida con el formato colombiano y guarda entradas, salidas y permanencia en SQLite.</p>
+          <div class="ctas">
+            <a class="btn primario" href="#pruebalo" data-i18n="portada.cta_primario">Probar el validador</a>
+            <a class="btn" href="https://github.com/y0ner/smart-alpr-iot" data-i18n="portada.cta_codigo">Ver el código</a>
+          </div>
+          <div class="pila" data-i18n-attr="aria-label:portada.pila_aria" aria-label="Tecnologías">
+            <span>Python 3.12</span><span>YOLO</span><span>OpenCV</span><span>EasyOCR</span><span>SQLite</span><span>Streamlit</span><span>Docker</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="seccion" id="como-funciona">
+      <div class="wrap">
+        <div class="seccion-cabeza">
+          <h2 data-i18n="etapas.titulo">Así viaja una imagen por el sistema</h2>
+          <p><span data-i18n="etapas.sub_inicio">Salidas reales del código con la foto de una placa de Popayán. Cada parámetro corresponde a </span><span class="mono">src/preprocessor.py</span><span data-i18n="etapas.sub_fin">.</span></p>
+        </div>
+
+        <div class="etapas-barra">
+          <div class="selector-etapas" role="group" data-i18n-attr="aria-label:etapas.selector_aria" aria-label="Versión del preprocesamiento">
+            <button type="button" class="seg-btn activo" id="btn-etapas-antes" data-modo="antes" aria-pressed="true" data-i18n="etapas.btn_antes">Antes</button>
+            <button type="button" class="seg-btn" id="btn-etapas-despues" data-modo="despues" aria-pressed="false" data-i18n="etapas.btn_despues_pend">Después: pendiente de medición</button>
+          </div>
+        </div>
+
+        <div class="etapas" id="etapas-grid"></div>
+
+        <div class="siguen" data-i18n-attr="aria-label:etapas.siguen_aria" aria-label="Etapas siguientes">
+          <a class="paso" href="#pruebalo" data-i18n="etapas.paso_07">07 EasyOCR</a><span class="flecha" aria-hidden="true">→</span>
+          <a class="paso" href="#pruebalo" data-i18n="etapas.paso_08">08 Validación colombiana</a><span class="flecha" aria-hidden="true">→</span>
+          <a class="paso" href="#pruebalo" data-i18n="etapas.paso_09">09 Votación entre cuadros</a><span class="flecha" aria-hidden="true">→</span>
+          <a class="paso" href="#pruebalo" data-i18n="etapas.paso_10">10 Registro en SQLite</a>
+        </div>
+
+        <div class="aviso" id="aviso-letras-huecas">
+          <span class="etiqueta" data-i18n="etapas.aviso_etiqueta">Lo que muestra esta tira</span>
+          <p data-i18n="etapas.aviso_texto">En una placa de casi 900 px de alto, el bloque de 19 px solo encuentra bordes y las letras quedan huecas en las etapas 05 y 06. Por eso EasyOCR no lee la salida final. La corrección propuesta normaliza la altura del recorte antes de filtrar.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion" id="pruebalo">
+      <div class="wrap">
+        <div class="seccion-cabeza">
+          <h2 data-i18n="pruebalo.titulo">Pruébalo con una lectura del OCR</h2>
+          <p data-i18n="pruebalo.sub">Escribe lo que el OCR podría haber leído. El validador fuerza letras en las tres primeras posiciones y dígitos en la cuarta y la quinta; la sexta decide si es carro o moto.</p>
+        </div>
+        <div class="lab">
+          <div class="panel" aria-labelledby="t-validador">
+            <div class="panel-cabeza">
+              <h3 id="t-validador" data-i18n="validador.titulo">Validador colombiano</h3>
+              <span class="etiqueta" data-i18n="validador.formato">AAA000 carro · AAA00A moto</span>
+            </div>
+            <div class="campo">
+              <label for="lectura" data-i18n="validador.label">Lectura del OCR</label>
+              <input id="lectura" type="text" value="KLM9O1" maxlength="14" autocomplete="off" spellcheck="false" autocapitalize="characters">
+            </div>
+            <div class="presets" data-i18n-attr="aria-label:validador.presets_aria" aria-label="Ejemplos">
+              <button type="button" data-v="KLM9O1">KLM9O1</button>
+              <button type="button" data-v="8OG12A">8OG12A</button>
+              <button type="button" data-v="AUH43O">AUH43O</button>
+              <button type="button" data-v="WGL45I">WGL45I</button>
+              <button type="button" data-v="TKI-O33">TKI-O33</button>
+              <button type="button" data-v="9HSOUE444">9HSOUE444</button>
+            </div>
+            <div class="celdas" id="celdas" aria-live="polite"></div>
+            <div class="veredicto"><span class="pill" id="pill"></span><span class="motivo" id="motivo"></span></div>
+            <div class="mini-placa" id="mini-placa" role="img" data-i18n-attr="aria-label:validador.placa_aria" aria-label="Placa resultante">
+              <div class="placa-chars"><span id="mp-l">KLM</span><span class="sello" aria-hidden="true"></span><span id="mp-n">901</span></div>
+              <div class="placa-ciudad" aria-hidden="true">COLOMBIA</div>
+            </div>
+          </div>
+
+          <div class="panel" aria-labelledby="t-votacion">
+            <div class="panel-cabeza">
+              <h3 id="t-votacion" data-i18n="votacion.titulo">Votación entre cuadros</h3>
+              <span class="etiqueta" data-i18n="votacion.regla">N = 7 · k = 4 · espera 15 s</span>
+            </div>
+            <p class="motivo" data-i18n="votacion.desc">Un carro pasa frente a la cámara durante varios cuadros. El sistema registra la placa cuando 4 de los últimos 7 cuadros válidos coinciden y luego la ignora 15 s para no duplicarla.</p>
+            <div class="slots" id="slots" data-i18n-attr="aria-label:votacion.slots_aria" aria-label="Últimos 7 cuadros válidos"></div>
+            <div class="panel-cabeza">
+              <span class="contador" id="contador"></span>
+              <button class="btn" id="leer" type="button" data-i18n="votacion.btn_leer">Leer un cuadro</button>
+            </div>
+            <div class="ultimo" id="ultimo" aria-live="polite"></div>
+            <div class="tabla-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th data-i18n="votacion.th_id">id</th>
+                    <th data-i18n="votacion.th_placa">placa</th>
+                    <th data-i18n="votacion.th_sentido">sentido</th>
+                    <th data-i18n="votacion.th_momento">momento</th>
+                    <th data-i18n="votacion.th_conf">confianza</th>
+                  </tr>
+                </thead>
+                <tbody id="accesos">
+                  <tr class="vacio"><td colspan="5" data-i18n="votacion.vacio">Sin registros todavía. Lee cuadros hasta que 4 coincidan.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <p class="nota-lab"><span data-i18n="pruebalo.nota_inicio">El validador y la votación son el mismo algoritmo de </span><span class="mono">src/validator.py</span><span data-i18n="pruebalo.nota_fin"> portado a JavaScript. Las lecturas del panel derecho son simuladas; el OCR y la cámara no corren en el navegador.</span></p>
+      </div>
+    </section>
+
+    <section class="seccion" id="laboratorio">
+      <div class="wrap">
+        <div class="seccion-cabeza">
+          <h2 data-i18n="cvlab.titulo">Laboratorio OpenCV.js en el navegador</h2>
+          <p data-i18n="cvlab.sub">Carga OpenCV.js bajo demanda para correr las etapas de preprocesamiento sobre una muestra del repositorio o una foto propia. El OCR (EasyOCR) no corre en el navegador.</p>
+        </div>
+
+        <div class="cv-barra">
+          <div class="cv-carga">
+            <button type="button" class="btn primario" id="lab-cargar-cv" data-i18n="cvlab.btn_cargar">Cargar OpenCV.js (10 MB)</button>
+            <span class="cv-estado" id="lab-estado-cv" role="status" aria-live="polite" data-i18n="cvlab.estado_sin_cargar">OpenCV.js aún no se ha descargado. Pulsa el botón para iniciarlo.</span>
+          </div>
+          <span class="cv-privacidad" data-i18n="cvlab.privacidad">Tu foto no sale de tu navegador.</span>
+        </div>
+
+        <div class="cv-grid">
+          <div class="panel" aria-labelledby="t-cv-imagen">
+            <div class="panel-cabeza">
+              <h3 id="t-cv-imagen" data-i18n="cvlab.entrada_titulo">1. Foto y recorte de la placa</h3>
+              <span class="etiqueta mono" id="lab-roi-texto">ROI: —</span>
+            </div>
+
+            <div class="cv-fuentes">
+              <div class="campo-inline">
+                <label for="lab-muestra" data-i18n="cvlab.muestra_label">Muestra del proyecto</label>
+                <select id="lab-muestra"></select>
+              </div>
+              <div class="campo-inline">
+                <label for="lab-archivo" data-i18n="cvlab.archivo_label">O sube tu propia foto</label>
+                <input id="lab-archivo" type="file" accept="image/*">
+              </div>
+            </div>
+
+            <div class="cv-visor-wrap">
+              <canvas id="lab-visor" data-i18n-attr="aria-label:cvlab.visor_aria" aria-label="Foto de prueba para seleccionar el rectángulo de la placa"></canvas>
+            </div>
+
+            <div class="panel-cabeza">
+              <span class="motivo" data-i18n="cvlab.roi_ayuda">Arrastra un rectángulo sobre la placa (funciona con mouse o dedo).</span>
+              <button type="button" class="btn btn-chico" id="lab-roi-reset" data-i18n="cvlab.btn_roi_completo">Foto completa</button>
+            </div>
+          </div>
+
+          <div class="panel" aria-labelledby="t-cv-controles">
+            <div class="panel-cabeza">
+              <h3 id="t-cv-controles" data-i18n="cvlab.controles_titulo">2. Parámetros del pipeline</h3>
+              <span class="etiqueta" data-i18n="cvlab.ocr_nota_corta">Solo OpenCV · sin EasyOCR</span>
+            </div>
+
+            <div class="cv-controles">
+              <div class="control-fila">
+                <div class="control-cabeza">
+                  <label for="ctrl-altura" data-i18n="cvlab.ctrl_altura">Altura normalizada</label>
+                  <output class="mono" id="val-altura" for="ctrl-altura">140 px</output>
+                </div>
+                <input id="ctrl-altura" type="range" min="60" max="300" step="2" value="140">
+              </div>
+
+              <div class="control-doble">
+                <div class="control-fila">
+                  <div class="control-cabeza">
+                    <label for="ctrl-d" data-i18n="cvlab.ctrl_d">Bilateral d</label>
+                    <output class="mono" id="val-d" for="ctrl-d">9</output>
+                  </div>
+                  <input id="ctrl-d" type="range" min="3" max="19" step="2" value="9">
+                </div>
+                <div class="control-fila">
+                  <div class="control-cabeza">
+                    <label for="ctrl-sigma" data-i18n="cvlab.ctrl_sigma">Bilateral sigma</label>
+                    <output class="mono" id="val-sigma" for="ctrl-sigma">30</output>
+                  </div>
+                  <input id="ctrl-sigma" type="range" min="5" max="75" step="5" value="30">
+                </div>
+              </div>
+
+              <div class="control-fila">
+                <div class="control-cabeza">
+                  <label for="ctrl-umbral-modo" data-i18n="cvlab.ctrl_umbral_modo">Método de umbral</label>
+                  <select id="ctrl-umbral-modo">
+                    <option value="adaptativo" data-i18n="cvlab.umbral_adaptativo">Adaptativo gaussiano</option>
+                    <option value="otsu" data-i18n="cvlab.umbral_otsu">Otsu global</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="control-doble">
+                <div class="control-fila">
+                  <div class="control-cabeza">
+                    <label for="ctrl-bloque" data-i18n="cvlab.ctrl_bloque">Bloque impar</label>
+                    <output class="mono" id="val-bloque" for="ctrl-bloque">43 px</output>
+                  </div>
+                  <input id="ctrl-bloque" type="range" min="3" max="99" step="2" value="43">
+                </div>
+                <div class="control-fila">
+                  <div class="control-cabeza">
+                    <label for="ctrl-c" data-i18n="cvlab.ctrl_c">Constante C</label>
+                    <output class="mono" id="val-c" for="ctrl-c">9</output>
+                  </div>
+                  <input id="ctrl-c" type="range" min="-10" max="25" step="1" value="9">
+                </div>
+              </div>
+
+              <div class="control-check">
+                <input id="ctrl-morfologia" type="checkbox" checked>
+                <label for="ctrl-morfologia" data-i18n="cvlab.ctrl_morfologia">Morfología (apertura 3 x 3 y cierre 3 x 2)</label>
+              </div>
+            </div>
+
+            <div class="aviso cv-explicacion">
+              <span class="etiqueta" data-i18n="cvlab.huecas_etiqueta">Bloque vs. altura del recorte</span>
+              <p data-i18n="cvlab.huecas_texto">Cuando el bloque del umbral adaptativo es pequeño frente a la altura del recorte (por ejemplo 11-19 px sobre 140-300 px), el vecindario solo cubre bordes y las letras quedan huecas. Sube el bloque hacia ~0.3× la altura para rellenarlas.</p>
+              <span class="mono cv-relacion" id="lab-relacion">bloque / altura = 0.31</span>
+            </div>
+
+            <p class="motivo" data-i18n="cvlab.ocr_aclaracion">El OCR (EasyOCR) no corre en el navegador: aquí ves únicamente el efecto de cada filtro de OpenCV antes de pasar al lector.</p>
+          </div>
+        </div>
+
+        <div class="cv-etapas" id="lab-salidas">
+          <figure class="etapa">
+            <div class="etapa-img cv-caja"><canvas id="cv-recorte"></canvas></div>
+            <figcaption><span class="etapa-num">01</span><h3 data-i18n="cvlab.etapa_recorte">Recorte normalizado</h3><span class="param" id="param-recorte">—</span></figcaption>
+          </figure>
+          <figure class="etapa">
+            <div class="etapa-img cv-caja"><canvas id="cv-grises"></canvas></div>
+            <figcaption><span class="etapa-num">02</span><h3 data-i18n="cvlab.etapa_grises">Escala de grises</h3><span class="param" id="param-grises">—</span></figcaption>
+          </figure>
+          <figure class="etapa">
+            <div class="etapa-img cv-caja"><canvas id="cv-bilateral"></canvas></div>
+            <figcaption><span class="etapa-num">03</span><h3 data-i18n="cvlab.etapa_bilateral">Filtro bilateral</h3><span class="param" id="param-bilateral">—</span></figcaption>
+          </figure>
+          <figure class="etapa">
+            <div class="etapa-img cv-caja"><canvas id="cv-umbral"></canvas></div>
+            <figcaption><span class="etapa-num">04</span><h3 data-i18n="cvlab.etapa_umbral">Umbral</h3><span class="param" id="param-umbral">—</span></figcaption>
+          </figure>
+          <figure class="etapa">
+            <div class="etapa-img cv-caja"><canvas id="cv-morfologia"></canvas></div>
+            <figcaption><span class="etapa-num">05</span><h3 data-i18n="cvlab.etapa_morfologia">Morfología</h3><span class="param" id="param-morfologia">—</span></figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion" id="resultados">
+      <div class="wrap">
+        <div class="seccion-cabeza">
+          <h2 data-i18n="resultados.titulo">Lo que mide hoy el sistema</h2>
+          <p><span data-i18n="resultados.sub_inicio">Las 11 fotos de </span><span class="mono">data/samples</span><span data-i18n="resultados.sub_fin"> pasadas por el pipeline actual en CPU, con la placa verdadera leída a mano. Es el punto de partida; la columna "después" se llena al terminar las correcciones.</span></p>
+        </div>
+        <div class="cifras" id="cifras-res"></div>
+        <div class="tabla-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th data-i18n="resultados.th_foto">foto</th>
+                <th data-i18n="resultados.th_real">placa real</th>
+                <th data-i18n="resultados.th_sin">sin preprocesar</th>
+                <th data-i18n="resultados.th_con">con preprocesar</th>
+                <th data-i18n="resultados.th_despues">después</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-res"></tbody>
+          </table>
+        </div>
+        <p class="pie-tabla" id="pie-resultados"></p>
+      </div>
+    </section>
+
+    <section class="seccion" id="limites">
+      <div class="wrap">
+        <div class="seccion-cabeza">
+          <h2 data-i18n="limites.titulo">Dónde falla y por qué</h2>
+          <p data-i18n="limites.sub">Tres casos reales de las pruebas, con la lectura que devolvió el sistema.</p>
+        </div>
+        <div class="fallas">
+          <figure class="falla">
+            <div class="etapa-img"><img src="img/fallas/cajas.webp" data-i18n-attr="alt:limites.cajas_alt" alt="Placa AHB 965 con 23 cajas ámbar del detector de respaldo" width="400" height="179"></div>
+            <figcaption>
+              <h3 data-i18n="limites.cajas_titulo">Cajas por todas partes</h3>
+              <p data-i18n="limites.cajas_desc">El detector de respaldo marcó 23 regiones en una foto que solo tiene una placa. Sin YOLO, cualquier zona con bordes verticales parece placa.</p>
+              <span class="lectura" data-i18n="limites.cajas_lectura">23 cajas → ninguna lectura válida</span>
+            </figcaption>
+          </figure>
+          <figure class="falla">
+            <div class="etapa-img"><img src="img/fallas/placa-blanca.webp" data-i18n-attr="alt:limites.blanca_alt" alt="Taxi amarillo con placa blanca de servicio público WGL 451 de Cartagena" width="400" height="267"></div>
+            <figcaption>
+              <h3 data-i18n="limites.blanca_titulo">Placa blanca de servicio público</h3>
+              <p data-i18n="limites.blanca_desc">El fondo blanco y la carrocería amarilla confunden al umbral. La placa WGL451 se leyó como otra placa válida.</p>
+              <span class="lectura" data-i18n="limites.blanca_lectura">WGL451 → AOG686 (sin preprocesar)</span>
+            </figcaption>
+          </figure>
+          <figure class="falla">
+            <div class="etapa-img"><img src="img/fallas/ciudad.webp" data-i18n-attr="alt:limites.ciudad_alt" alt="Placa blanca SJS 444 de Dosquebradas" width="400" height="299"></div>
+            <figcaption>
+              <h3 data-i18n="limites.ciudad_titulo">La ciudad se pega a la placa</h3>
+              <p data-i18n="limites.ciudad_desc">La franja con el nombre del municipio entra en la misma caja y el OCR une las dos líneas en un solo texto.</p>
+              <span class="lectura">SJS444 → 9HSOUEDRADAS444</span>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="seccion" id="correr">
+      <div class="wrap">
+        <div class="seccion-cabeza">
+          <h2 data-i18n="correr.titulo">Correr la consola de operación</h2>
+          <p data-i18n="correr.sub">La consola es una app de Streamlit que corre en el equipo de la garita o en un contenedor. Este sitio es solo la presentación del proyecto.</p>
+        </div>
+        <div class="correr">
+          <div>
+            <h3 data-i18n="correr.docker_titulo">Con Docker</h3>
+<pre><span class="c" data-i18n="correr.docker_c1"># construye e inicia en segundo plano</span>
+docker compose up -d --build
+<span class="c" data-i18n="correr.docker_c2"># abre http://localhost:8501</span></pre>
+            <p><span data-i18n="correr.docker_nota_1">Los volúmenes </span><span class="mono">db/</span><span data-i18n="correr.docker_nota_2"> y </span><span class="mono">data/</span><span data-i18n="correr.docker_nota_3"> conservan los registros entre reinicios.</span></p>
+          </div>
+          <div>
+            <h3 data-i18n="correr.linux_titulo">En Linux Mint o Ubuntu</h3>
+<pre>git clone https://github.com/y0ner/smart-alpr-iot
+cd smart-alpr-iot
+./run.sh</pre>
+            <p><span class="mono">run.sh</span><span data-i18n="correr.linux_nota"> crea el entorno virtual la primera vez e instala las dependencias.</span></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="linea"><strong>Smart ALPR IoT</strong><span data-i18n="pie.proyecto">Proyecto final de Visión Artificial · Ingeniería de Sistemas · Universidad de La Guajira</span></div>
+      <div class="linea"><span data-i18n="pie.autor">Autor: Yoner Isaza</span><span data-i18n="pie.docente">Docente: Eduardo Sierra Fragozo</span><span data-i18n="pie.licencia">Licencia: MIT</span><span data-i18n="pie.fuente">Fotos de muestra descargadas de internet: fuente pendiente de citar</span></div>
+    </div>
+  </footer>
+
+  <script type="module" src="js/principal.js"></script>
+</body>
+</html>
