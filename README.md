@@ -84,7 +84,7 @@ smart-alpr-iot/
 │           └── verdad.csv            # Verdad de referencia etiquetada para benchmark
 ├── db/                               # Persistencia y esquema relacional
 │   ├── schema.sql                    # Definición DDL de tablas e índices SQLite
-│   └── smart_alpr.db                 # Base de datos operativa en producción
+│   └── smart_alpr.db                 # Base de datos local (se crea al iniciar; no se versiona)
 ├── docs/                             # Documentación técnica y académica formal
 │   ├── agentes/                      # Sistema de delegación y briefs de trabajo
 │   │   └── briefs/                   # Especificaciones de tareas por rama
@@ -263,7 +263,7 @@ La interfaz desarrollada en `src/app.py` dispone de 3 consolas operativas:
    - Selector directo 1-Click de **placas reales colombianas descargadas** (Medellín, Bogotá, Cartagena, Dosquebradas, Sonsón, etc.).
    - **Comparador visual del pipeline morfológico de 5 etapas:** Original $\to$ Grises $\to$ Filtro Bilateral $\to$ Binarización Adaptativa $\to$ Morfología / Deskewing.
 2. **📋 AUDITORÍA Y CONTROL DE ACCESO:**
-   - KPIs de aforo en vivo: Vehículos actualmente en parqueadero, tiempo promedio de estadía, aforo ocupado vs capacidad instalada (420 cupos).
+   - Indicadores en vivo: vehículos dentro del parqueadero, carros y motos dentro, accesos de hoy y confianza media de las lecturas.
    - Tabla transaccional en tiempo real conectada a SQLite con filtros de búsqueda por placa y orden cronológico.
 3. **🔬 LABORATORIO DE INFERENCIA Y VISIÓN:**
    - Ejecución interactiva de la demostración matemática 3x3.
@@ -278,8 +278,8 @@ La interfaz desarrollada en `src/app.py` dispone de 3 consolas operativas:
 - [x] **Etapa 2:** Validación de placa colombiana (Carro/Moto), corrección heurística posicional y búfer de votación multi-cuadro.
 - [x] **Etapa 3:** Pipeline de visión clásica OpenCV, extracción morfológica y demostración matemática 3x3 paso a paso.
 - [x] **Etapa 4:** Motor de inferencia YOLO + EasyOCR, latencias, benchmark A/B (reto extra +0.5) y notebook Colab con GPU.
-- [x] **Etapa 5:** Interfaz de control SCADA/Telemetría en tiempo real (`src/app.py`) y dockerización lista para producción.
-- [x] **Etapa 6:** Documentación técnica completa (Secciones A a E), auditoría de fallas en campo y entrega final.
+- [x] **Etapa 5:** Interfaz de control SCADA/Telemetría en tiempo real (`src/app.py`) y `Dockerfile` / `docker-compose.yml` para correr la consola en un contenedor.
+- [x] **Etapa 6:** Documentación técnica completa (Secciones A a E), casos de falla medidos sobre las fotos de muestra y entrega final.
 
 ---
 
