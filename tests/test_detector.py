@@ -1,7 +1,7 @@
-"""Pruebas de integración de extremo a extremo (E2E) para el motor ALPR y Reto Extra A/B.
+"""Pruebas de integración de extremo a extremo (E2E) para el motor ALPR.
 
 Verifica la detección, extracción OCR, validación sintáctica, votación temporal,
-persistencia en SQLite, telemetría de latencias/FPS y evaluación experimental A/B.
+persistencia en SQLite y telemetría de latencias/FPS.
 """
 
 import tempfile
@@ -11,13 +11,6 @@ import cv2
 import numpy as np
 import pytest
 
-from src.benchmark_ab import (
-    BenchmarkEvaluator,
-    BenchmarkReport,
-    calculate_cer,
-    create_synthetic_benchmark_dataset,
-    levenshtein_distance,
-)
 from src.config import SCHEMA_SQL_PATH
 from src.db import DatabaseManager
 from src.detector import ALPRPipeline, DetectionBBox, PipelineLatency
@@ -163,26 +156,29 @@ def test_process_frame_consensus_and_sqlite_persistence(
         assert Path(r2.saved_capture_path).exists()
 
 
-def test_levenshtein_and_cer_metrics() -> None:
-    """Verifica el cálculo de distancia de edición y CER."""
-    assert levenshtein_distance("ABC123", "ABC123") == 0
-    assert levenshtein_distance("ABC123", "AB0123") == 1
-    assert levenshtein_distance("ABC123", "XYZ999") == 6
+def test_process_frame_uses_session_voter_buffer(
+    memory_db: DatabaseManager, temp_output_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Verifica que la votación vaya al buffer de la sesión y no al del pipeline."""
+    pipeline = ALPRPipeline(
+        db_manager=memory_db,
+        voter_buffer=PlateVoterBuffer(window_size=3, min_matches=2),
+        output_dir=temp_output_dir,
+        save_captures=False,
+        use_gpu=False,
+    )
+    # OCR determinista: no carga EasyOCR
+    monkeypatch.setattr(pipeline, "extract_ocr_text", lambda _img: ("ABC123", 0.9))
+    sesion = PlateVoterBuffer(window_size=3, min_matches=2)
+    frame = create_clean_plate_frame("ABC123")
 
-    assert calculate_cer("ABC123", "ABC123") == 0.0
-    assert calculate_cer("ABO123", "ABC123") == pytest.approx(1.0 / 6.0, rel=1e-3)
-    assert calculate_cer("", "ABC123") == 1.0
+    r1 = pipeline.process_frame(frame, timestamp=300.0, voter_buffer=sesion)
+    r2 = pipeline.process_frame(frame, timestamp=300.1, voter_buffer=sesion)
 
-
-def test_benchmark_report_markdown_generation() -> None:
-    """Verifica la generación del informe comparativo del Reto Extra A/B."""
-    dataset = create_synthetic_benchmark_dataset(num_samples=2)
-    evaluator = BenchmarkEvaluator(use_gpu=False)
-    report: BenchmarkReport = evaluator.evaluate_dataset(dataset)
-
-    md = report.to_markdown()
-    assert "Evaluación Experimental A/B: Reto Extra" in md
-    assert "Modo A: Recorte Crudo" in md
-    assert "Modo B: Pipeline OpenCV" in md
-    assert "Curva y Tabla de Sensibilidad del Umbral de Confianza YOLO" in md
-    assert len(report.sensitivity_curve) == 6
+    assert r1.consensus is None
+    assert r2.consensus is not None and r2.consensus.plate == "ABC123"
+    assert r2.access_record is not None
+    # El buffer propio del pipeline no recibió ningún voto
+    assert len(pipeline.voter_buffer._buffer) == 0
+    assert len(sesion._buffer) == 2
+    assert pipeline.yolo_loaded is False
