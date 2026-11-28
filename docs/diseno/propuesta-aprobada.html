@@ -1,0 +1,707 @@
+<title>Smart ALPR IoT web</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Concepto: la página recorre el mismo camino que la imagen (captura → registro); la placa colombiana es el material principal. */
+:root {
+  --bg: #ECEEF1;
+  --surface: #FFFFFF;
+  --surface-2: #F5F6F8;
+  --line: #D3D7DE;
+  --ink: #14161B;
+  --muted: #555C69;
+  --faint: #737A88;
+  --placa: #F2B705;
+  --placa-tinta: #14161B;
+  --mat: #DADDE3;
+  --ok: #0B8A60;
+  --ok-bg: rgba(11, 138, 96, .10);
+  --warn: #9A5A06;
+  --warn-bg: rgba(217, 119, 6, .12);
+  --bad: #C62828;
+  --bad-bg: rgba(198, 40, 40, .09);
+  --focus: #2563EB;
+  --etiqueta-bg: #11131A;
+  --etiqueta-fg: #F3F4F6;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --text: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #090A0F; --surface: #11131A; --surface-2: #181B26; --line: #1E2230;
+    --ink: #F3F4F6; --muted: #9CA3AF; --faint: #7C8494; --placa: #F2B705; --placa-tinta: #11131A;
+    --mat: #0D0F15; --ok: #10B981; --ok-bg: rgba(16, 185, 129, .12); --warn: #F59E0B;
+    --warn-bg: rgba(245, 158, 11, .12); --bad: #EF4444; --bad-bg: rgba(239, 68, 68, .12);
+    --focus: #3B82F6; --etiqueta-bg: #11131A; --etiqueta-fg: #F3F4F6;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #090A0F; --surface: #11131A; --surface-2: #181B26; --line: #1E2230;
+  --ink: #F3F4F6; --muted: #9CA3AF; --faint: #7C8494; --placa: #F2B705; --placa-tinta: #11131A;
+  --mat: #0D0F15; --ok: #10B981; --ok-bg: rgba(16, 185, 129, .12); --warn: #F59E0B;
+  --warn-bg: rgba(245, 158, 11, .12); --bad: #EF4444; --bad-bg: rgba(239, 68, 68, .12);
+  --focus: #3B82F6; --etiqueta-bg: #11131A; --etiqueta-fg: #F3F4F6;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--text);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--surface);
+}
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+.wrap {
+  max-width: 1160px; margin-inline: auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+h1, h2, h3 { font-family: var(--display); font-weight: 600; line-height: 1.05; text-wrap: balance; margin: 0; letter-spacing: .005em; }
+h2 { font-size: clamp(2rem, 4.2vw, 3rem); }
+h3 { font-size: 1.45rem; }
+p { margin: 0; }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.etiqueta { font-family: var(--mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+/* Marco de la propuesta: lo que va dentro no se publica */
+.nota-propuesta { border-bottom: 1px dashed var(--line); background: var(--surface-2); }
+.nota-propuesta .wrap { padding-block: 9px; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-family: var(--mono); font-size: .74rem; color: var(--muted); }
+.nota-propuesta strong { color: var(--ink); font-weight: 700; letter-spacing: .06em; }
+
+/* Navegación */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 20px; min-height: 56px; }
+.marca { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; white-space: nowrap; }
+.marca-placa { font-family: var(--display); font-weight: 700; font-size: .95rem; letter-spacing: .08em; background: var(--placa); color: var(--placa-tinta); padding: 1px 7px; border-radius: 4px; box-shadow: inset 0 0 0 2px var(--placa), inset 0 0 0 3.5px var(--placa-tinta); }
+.nav-links { display: flex; gap: 4px; margin-left: auto; align-items: center; }
+.nav-links a { text-decoration: none; color: var(--muted); font-size: .92rem; padding: 6px 10px; border-radius: var(--r); }
+.nav-links a:hover { color: var(--ink); background: var(--surface-2); }
+.tema { font: inherit; font-size: .8rem; font-family: var(--mono); color: var(--muted); background: none; border: 1px solid var(--line); border-radius: var(--r); padding: 5px 9px; cursor: pointer; }
+.tema:hover { color: var(--ink); }
+@media (max-width: 760px) { .nav-links .opcional { display: none; } .nav .wrap { gap: 10px; } .nav-links a { padding: 6px 7px; } }
+@media (max-width: 480px) { .marca-texto { display: none; } .tema .largo { display: none; } }
+
+/* Portada: la placa es el objeto */
+.portada .wrap { padding-block: 36px 56px; display: grid; gap: 28px; }
+.placa-escena { position: relative; width: min(100%, 760px); padding: 3.2% 3% 3% 3%; }
+.placa {
+  container-type: inline-size; position: relative; width: 100%; aspect-ratio: 33 / 16;
+  background: var(--placa); border-radius: 3.4cqi;
+  box-shadow: inset 0 .5cqi 0 rgba(255, 255, 255, .35), inset 0 -.6cqi 0 rgba(0, 0, 0, .12), 0 1px 2px rgba(0, 0, 0, .18);
+}
+.placa::before { content: ""; position: absolute; inset: 2.4cqi; border: .95cqi solid var(--placa-tinta); border-radius: 2.2cqi; }
+.placa-chars {
+  position: absolute; inset: 9% 0 auto; display: flex; justify-content: center; align-items: center; gap: 2.2cqi;
+  font-family: var(--display); font-weight: 600; font-size: 31cqi; line-height: 1; color: var(--placa-tinta); letter-spacing: .8cqi;
+}
+.sello { width: 4.2cqi; height: 4.2cqi; border: .55cqi solid var(--placa-tinta); border-radius: 50%; flex: none; position: relative; top: -1cqi; }
+.placa-ciudad { position: absolute; left: 0; right: 0; bottom: 9.5%; text-align: center; font-family: var(--display); font-weight: 600; font-size: 6.6cqi; letter-spacing: 1.3cqi; color: var(--placa-tinta); line-height: 1; }
+.tornillo { position: absolute; top: 7.5%; width: 3.4cqi; height: 3.4cqi; border-radius: 50%; background: radial-gradient(circle at 35% 32%, #FFFFFF 0 18%, #B9BEC6 45%, #6A7079 100%); box-shadow: 0 .2cqi .3cqi rgba(0, 0, 0, .35); }
+.tornillo.t1 { left: 15%; } .tornillo.t2 { right: 15%; }
+.ranura { position: absolute; bottom: 10.5%; width: 4.6cqi; height: 1.5cqi; border-radius: 1cqi; background: var(--placa-tinta); opacity: .85; }
+.ranura.r1 { left: 7.5%; } .ranura.r2 { right: 7.5%; }
+.caja-deteccion { position: absolute; inset: 0; border: 2px solid var(--ok); border-radius: 2px; pointer-events: none; }
+.caja-etiqueta { position: absolute; left: -2px; top: 0; transform: translateY(-100%); background: var(--etiqueta-bg); color: var(--etiqueta-fg); font-family: var(--mono); font-size: clamp(.62rem, 1.5vw, .8rem); padding: 3px 8px; white-space: nowrap; border-radius: 2px 2px 0 0; }
+.caja-etiqueta b { color: #34D399; font-weight: 500; }
+@media (prefers-reduced-motion: no-preference) {
+  .caja-deteccion { animation: enfoque .9s cubic-bezier(.2, .7, .2, 1) .25s both; }
+  .caja-etiqueta { animation: aparece .3s ease-out 1.05s both; }
+  @keyframes enfoque { from { inset: -14px; opacity: 0; } to { inset: 0; opacity: 1; } }
+  @keyframes aparece { from { opacity: 0; } to { opacity: 1; } }
+}
+.portada-texto { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px 48px; align-items: end; }
+.portada h1 { font-size: clamp(2.3rem, 5.4vw, 4.1rem); font-weight: 600; }
+.portada .lead { color: var(--muted); max-width: 52ch; }
+.ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 600; font-size: .95rem; padding: 10px 16px; border-radius: var(--r); border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-family: var(--text); }
+.btn:hover { border-color: var(--faint); }
+.btn.primario { background: var(--placa-tinta); color: var(--placa); border-color: var(--placa-tinta); }
+:root[data-theme="dark"] .btn.primario { background: var(--placa); color: var(--placa-tinta); border-color: var(--placa); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.primario { background: var(--placa); color: var(--placa-tinta); border-color: var(--placa); } }
+.pila { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+.pila span { font-family: var(--mono); font-size: .74rem; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 2px 7px; }
+@media (max-width: 760px) { .portada-texto { grid-template-columns: minmax(0, 1fr); } }
+
+/* Secciones */
+.seccion { padding-block: 72px; border-top: 1px solid var(--line); }
+.seccion-cabeza { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 48px; align-items: end; margin-bottom: 36px; }
+.seccion-cabeza p { color: var(--muted); max-width: 60ch; }
+@media (max-width: 760px) { .seccion-cabeza { grid-template-columns: minmax(0, 1fr); } .seccion { padding-block: 52px; } }
+
+/* Recorrido de la imagen */
+.etapas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 24px; counter-reset: etapa; }
+.etapa { margin: 0; display: grid; gap: 10px; align-content: start; }
+.etapa-img { background: var(--mat); border-radius: var(--r); aspect-ratio: 16 / 9; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--line); }
+.etapa-img img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.etapa-img.escena img { object-fit: cover; }
+.etapa figcaption { display: grid; gap: 3px; }
+.etapa-num { font-family: var(--mono); font-size: .74rem; color: var(--faint); }
+.etapa h3 { font-size: 1.35rem; }
+.etapa .param { font-family: var(--mono); font-size: .8rem; color: var(--muted); }
+.etapa .que { color: var(--muted); font-size: .92rem; }
+.siguen { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.siguen .paso { font-family: var(--mono); font-size: .8rem; border: 1px solid var(--line); background: var(--surface); padding: 5px 10px; border-radius: 4px; text-decoration: none; }
+.siguen .flecha { color: var(--faint); font-family: var(--mono); }
+.aviso { margin-top: 28px; border: 1px solid var(--warn); background: var(--warn-bg); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 4px; max-width: 820px; }
+.aviso .etiqueta { color: var(--warn); }
+@media (max-width: 900px) { .etapas { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .etapas { grid-template-columns: minmax(0, 1fr); } }
+
+/* Laboratorio */
+.lab { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: grid; gap: 16px; align-content: start; min-width: 0; }
+.panel-cabeza { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.campo { display: grid; gap: 6px; }
+.campo label { font-size: .86rem; color: var(--muted); }
+.campo input { font-family: var(--mono); font-size: 1.25rem; letter-spacing: .12em; text-transform: uppercase; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface-2); color: var(--ink); width: 100%; }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.presets button { font-family: var(--mono); font-size: .78rem; padding: 4px 9px; border-radius: 4px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.presets button:hover { border-color: var(--faint); }
+.celdas { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.celda { border: 1px solid var(--line); border-radius: 4px; padding: 6px 4px; text-align: center; display: grid; gap: 2px; background: var(--surface-2); min-width: 0; }
+.celda .rol { font-family: var(--mono); font-size: .62rem; color: var(--faint); text-transform: uppercase; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.celda .car { font-family: var(--mono); font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
+.celda .antes { font-family: var(--mono); font-size: .72rem; color: var(--warn); min-height: 1.1em; }
+.celda.cambio { border-color: var(--warn); background: var(--warn-bg); }
+.celda.error { border-color: var(--bad); background: var(--bad-bg); }
+.celda.vacia .car { color: var(--faint); }
+.veredicto { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pill { font-family: var(--mono); font-size: .76rem; font-weight: 600; padding: 3px 9px; border-radius: 4px; border: 1px solid; }
+.pill.ok { color: var(--ok); background: var(--ok-bg); border-color: var(--ok); }
+.pill.mal { color: var(--bad); background: var(--bad-bg); border-color: var(--bad); }
+.pill.pend { color: var(--warn); background: var(--warn-bg); border-color: var(--warn); }
+.motivo { color: var(--muted); font-size: .9rem; }
+.mini-placa { container-type: inline-size; width: min(100%, 240px); aspect-ratio: 33 / 16; background: var(--placa); border-radius: 3.4cqi; position: relative; box-shadow: inset 0 .5cqi 0 rgba(255, 255, 255, .35), 0 1px 2px rgba(0, 0, 0, .18); }
+.mini-placa::before { content: ""; position: absolute; inset: 2.4cqi; border: 1.2cqi solid var(--placa-tinta); border-radius: 2.2cqi; }
+.mini-placa .placa-chars { font-size: 30cqi; gap: 2cqi; }
+.mini-placa .placa-ciudad { font-size: 7cqi; }
+.mini-placa.apagada { filter: grayscale(1); opacity: .45; }
+.slots { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.slot { border: 1px dashed var(--line); border-radius: 4px; min-height: 52px; display: grid; place-items: center; font-family: var(--mono); font-size: clamp(.56rem, 1.6vw, .7rem); padding: 4px 2px; text-align: center; color: var(--faint); min-width: 0; overflow-wrap: anywhere; }
+.slot.lleno { border-style: solid; color: var(--ink); background: var(--surface-2); }
+.slot.gana { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); font-weight: 700; }
+.contador { font-family: var(--mono); font-size: .85rem; color: var(--muted); }
+.ultimo { font-family: var(--mono); font-size: .82rem; color: var(--muted); min-height: 2.6em; }
+.ultimo b { color: var(--ink); font-weight: 500; }
+.tabla-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); }
+table { border-collapse: collapse; width: 100%; font-size: .86rem; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font-family: var(--mono); font-size: .7rem; font-weight: 500; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: var(--surface-2); }
+td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover td { background: var(--surface-2); }
+.vacio td { color: var(--faint); font-family: var(--text); white-space: normal; }
+.nota-lab { color: var(--faint); font-size: .86rem; margin-top: 16px; }
+@media (max-width: 900px) { .lab { grid-template-columns: minmax(0, 1fr); } }
+
+/* Resultados */
+.cifras { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); margin-bottom: 24px; }
+.cifra { padding: 18px 20px; border-right: 1px solid var(--line); display: grid; gap: 4px; align-content: start; min-width: 0; }
+.cifra:last-child { border-right: 0; }
+.cifra .valor { font-family: var(--display); font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 600; line-height: 1; }
+.cifra .valor small { font-size: .5em; color: var(--muted); font-weight: 500; }
+.cifra p { color: var(--muted); font-size: .88rem; }
+.ok-t { color: var(--ok); } .mal-t { color: var(--bad); }
+@media (max-width: 900px) { .cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cifra:nth-child(2) { border-right: 0; } .cifra:nth-child(-n+2) { border-bottom: 1px solid var(--line); } }
+@media (max-width: 420px) { .cifras { grid-template-columns: minmax(0, 1fr); } .cifra { border-right: 0; border-bottom: 1px solid var(--line); } .cifra:last-child { border-bottom: 0; } }
+.si { color: var(--ok); } .no { color: var(--bad); } .pend { color: var(--faint); }
+.pie-tabla { color: var(--faint); font-size: .84rem; margin-top: 10px; max-width: 80ch; }
+
+/* Límites */
+.fallas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.falla { margin: 0; display: grid; gap: 10px; align-content: start; }
+.falla .etapa-img { aspect-ratio: 4 / 3; }
+.falla .etapa-img img { object-fit: contain; }
+.falla p { color: var(--muted); font-size: .92rem; }
+.falla .lectura { font-family: var(--mono); font-size: .8rem; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; overflow-wrap: anywhere; }
+@media (max-width: 900px) { .fallas { grid-template-columns: minmax(0, 1fr); max-width: 520px; } }
+
+/* Correr */
+.correr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+pre { margin: 0; background: var(--etiqueta-bg); color: #E5E7EB; border-radius: var(--r); padding: 16px; overflow-x: auto; font-family: var(--mono); font-size: .85rem; line-height: 1.6; }
+pre .c { color: #8B93A3; }
+.correr h3 { margin-bottom: 10px; }
+.correr p { color: var(--muted); font-size: .92rem; margin-top: 10px; }
+@media (max-width: 760px) { .correr { grid-template-columns: minmax(0, 1fr); } }
+
+footer { border-top: 1px solid var(--line); background: var(--surface); }
+footer .wrap { padding-block: 28px 36px; display: grid; gap: 10px; color: var(--muted); font-size: .88rem; }
+footer .linea { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+
+/* Notas de la propuesta */
+.notas { margin-block: 48px 64px; border: 1.5px dashed var(--faint); border-radius: var(--r); padding: 22px; display: grid; gap: 18px; background: var(--surface-2); }
+.notas h2 { font-size: 1.8rem; }
+.notas-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 32px; }
+.notas h3 { font-size: 1.15rem; margin-bottom: 6px; }
+.notas p, .notas li { color: var(--muted); font-size: .92rem; }
+.notas ul, .notas ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.notas li b { color: var(--ink); font-weight: 600; }
+.muestras { display: flex; flex-wrap: wrap; gap: 8px; }
+.muestra { display: grid; gap: 4px; font-family: var(--mono); font-size: .68rem; color: var(--muted); }
+.muestra i { display: block; width: 56px; height: 36px; border-radius: 4px; border: 1px solid var(--line); }
+@media (max-width: 760px) { .notas-grid { grid-template-columns: minmax(0, 1fr); } }
+</style>
+
+<div class="nota-propuesta">
+  <div class="wrap"><strong>PROPUESTA DE DISEÑO v1</strong><span>27 nov 2026 · para aprobar</span><span>Lo que está en marco punteado no va al sitio</span></div>
+</div>
+
+<nav class="nav" aria-label="Principal">
+  <div class="wrap">
+    <a class="marca" href="#inicio" aria-label="Smart ALPR IoT, inicio"><span class="marca-placa">ALPR</span><span class="marca-texto">Smart ALPR IoT</span></a>
+    <div class="nav-links">
+      <a class="opcional" href="#como-funciona">Cómo funciona</a>
+      <a href="#pruebalo">Pruébalo</a>
+      <a class="opcional" href="#resultados">Resultados</a>
+      <a class="opcional" href="#limites">Límites</a>
+      <a href="https://github.com/y0ner/smart-alpr-iot">GitHub</a>
+      <button class="tema" id="tema" type="button" aria-label="Cambiar tema">Tema: sistema</button>
+    </div>
+  </div>
+</nav>
+
+<header class="portada" id="inicio">
+  <div class="wrap">
+    <p class="etiqueta">Visión artificial · Universidad de La Guajira · Riohacha</p>
+    <div class="placa-escena">
+      <div class="placa" role="img" aria-label="Placa amarilla UJR 456 de Riohacha enmarcada por la caja de detección">
+        <span class="tornillo t1"></span><span class="tornillo t2"></span>
+        <span class="ranura r1"></span><span class="ranura r2"></span>
+        <div class="placa-chars" aria-hidden="true">UJR<span class="sello"></span>456</div>
+        <div class="placa-ciudad" aria-hidden="true">RIOHACHA</div>
+      </div>
+      <div class="caja-deteccion" aria-hidden="true"><span class="caja-etiqueta">UJR456 [CARRO] <b>válida</b></span></div>
+    </div>
+    <div class="portada-texto">
+      <h1>Lee la placa, corrige al OCR y anota la hora de entrada.</h1>
+      <div>
+        <p class="lead">Un sistema de control de acceso para el parqueadero del Centro Comercial Viva Wajiira. Ubica la placa, la limpia con OpenCV, la lee con EasyOCR, la valida con el formato colombiano y guarda entradas, salidas y permanencia en SQLite.</p>
+        <div class="ctas">
+          <a class="btn primario" href="#pruebalo">Probar el validador</a>
+          <a class="btn" href="https://github.com/y0ner/smart-alpr-iot">Ver el código</a>
+        </div>
+        <div class="pila" aria-label="Tecnologías"><span>Python 3.12</span><span>YOLO</span><span>OpenCV</span><span>EasyOCR</span><span>SQLite</span><span>Streamlit</span><span>Docker</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="seccion" id="como-funciona">
+  <div class="wrap">
+    <div class="seccion-cabeza">
+      <h2>Así viaja una imagen por el sistema</h2>
+      <p>Salidas reales del código actual con la foto de una placa de Popayán. Cada parámetro es el que usa <span class="mono">src/preprocessor.py</span>.</p>
+    </div>
+    <div class="etapas">
+      <figure class="etapa">
+        <div class="etapa-img escena"><img src="../../website/img/etapas/antes/01-captura.webp" alt="Frente de un carro blanco con la placa EMY 923 marcada por una caja verde" width="720" height="480"></div>
+        <figcaption><span class="etapa-num">01</span><h3>Captura y detección</h3><span class="param">YOLO · conf ≥ 0.45</span><span class="que">Si no hay pesos en models/best.pt, entra el respaldo por gradiente Sobel.</span></figcaption>
+      </figure>
+      <figure class="etapa">
+        <div class="etapa-img"><img src="../../website/img/etapas/antes/02-recorte.webp" alt="Recorte de la placa amarilla EMY 923 Popayán" width="360" height="176"></div>
+        <figcaption><span class="etapa-num">02</span><h3>Recorte con margen</h3><span class="param">margen 12 % · escala ×3 bicúbica</span><span class="que">El margen evita cortar la primera y la última letra.</span></figcaption>
+      </figure>
+      <figure class="etapa">
+        <div class="etapa-img"><img src="../../website/img/etapas/antes/03-grises.webp" alt="La misma placa en escala de grises" width="360" height="176"></div>
+        <figcaption><span class="etapa-num">03</span><h3>Escala de grises</h3><span class="param">Y = 0.299R + 0.587G + 0.114B</span><span class="que">Tres canales pasan a uno: el OCR solo necesita contraste.</span></figcaption>
+      </figure>
+      <figure class="etapa">
+        <div class="etapa-img"><img src="../../website/img/etapas/antes/04-bilateral.webp" alt="La placa tras el filtro bilateral" width="360" height="176"></div>
+        <figcaption><span class="etapa-num">04</span><h3>Filtro bilateral</h3><span class="param">d = 11 · σ color = 17 · σ espacio = 17</span><span class="que">Suaviza el grano de la lámina reflectiva sin borrar los bordes.</span></figcaption>
+      </figure>
+      <figure class="etapa">
+        <div class="etapa-img"><img src="../../website/img/etapas/antes/05-umbral.webp" alt="Umbral adaptativo: solo quedan los contornos de los caracteres" width="360" height="176"></div>
+        <figcaption><span class="etapa-num">05</span><h3>Umbral adaptativo</h3><span class="param">gaussiano · bloque 19 × 19 · C = 9</span><span class="que">Compensa sombras: cada píxel se compara con su vecindario.</span></figcaption>
+      </figure>
+      <figure class="etapa">
+        <div class="etapa-img"><img src="../../website/img/etapas/antes/06-morfologia.webp" alt="Morfología final con letras huecas" width="360" height="176"></div>
+        <figcaption><span class="etapa-num">06</span><h3>Morfología</h3><span class="param">apertura 3 × 3 · cierre 3 × 2</span><span class="que">La apertura borra tornillos; el cierre une trazos partidos.</span></figcaption>
+      </figure>
+    </div>
+    <div class="siguen" aria-label="Etapas siguientes">
+      <a class="paso" href="#pruebalo">07 EasyOCR</a><span class="flecha">→</span>
+      <a class="paso" href="#pruebalo">08 Validación colombiana</a><span class="flecha">→</span>
+      <a class="paso" href="#pruebalo">09 Votación entre cuadros</a><span class="flecha">→</span>
+      <a class="paso" href="#pruebalo">10 Registro en SQLite</a>
+    </div>
+    <div class="aviso">
+      <span class="etiqueta">Lo que muestra esta tira</span>
+      <p>En una placa de casi 900 px de alto, el bloque de 19 px solo encuentra bordes y las letras quedan huecas en las etapas 05 y 06. Por eso EasyOCR no lee la salida final. La corrección propuesta normaliza la altura del recorte antes de filtrar; el sitio final mostrará el antes y el después.</p>
+    </div>
+  </div>
+</section>
+
+<section class="seccion" id="pruebalo">
+  <div class="wrap">
+    <div class="seccion-cabeza">
+      <h2>Pruébalo con una lectura del OCR</h2>
+      <p>Escribe lo que el OCR podría haber leído. El validador fuerza letras en las tres primeras posiciones y dígitos en la cuarta y la quinta; la sexta decide si es carro o moto.</p>
+    </div>
+    <div class="lab">
+      <div class="panel" aria-labelledby="t-validador">
+        <div class="panel-cabeza"><h3 id="t-validador">Validador colombiano</h3><span class="etiqueta">AAA000 carro · AAA00A moto</span></div>
+        <div class="campo">
+          <label for="lectura">Lectura del OCR</label>
+          <input id="lectura" type="text" value="KLM9O1" maxlength="14" autocomplete="off" spellcheck="false" autocapitalize="characters">
+        </div>
+        <div class="presets" aria-label="Ejemplos">
+          <button type="button" data-v="KLM9O1">KLM9O1</button>
+          <button type="button" data-v="8OG12A">8OG12A</button>
+          <button type="button" data-v="AUH43O">AUH43O</button>
+          <button type="button" data-v="WGL45I">WGL45I</button>
+          <button type="button" data-v="TKI-O33">TKI-O33</button>
+          <button type="button" data-v="9HSOUE444">9HSOUE444</button>
+        </div>
+        <div class="celdas" id="celdas" aria-live="polite"></div>
+        <div class="veredicto"><span class="pill" id="pill"></span><span class="motivo" id="motivo"></span></div>
+        <div class="mini-placa" id="mini-placa" role="img" aria-label="Placa resultante">
+          <div class="placa-chars"><span id="mp-l">KLM</span><span class="sello"></span><span id="mp-n">901</span></div>
+          <div class="placa-ciudad">COLOMBIA</div>
+        </div>
+      </div>
+
+      <div class="panel" aria-labelledby="t-votacion">
+        <div class="panel-cabeza"><h3 id="t-votacion">Votación entre cuadros</h3><span class="etiqueta">N = 7 · k = 4 · espera 15 s</span></div>
+        <p class="motivo">Un carro pasa frente a la cámara durante varios cuadros. El sistema registra la placa cuando 4 de los últimos 7 cuadros válidos coinciden y luego la ignora 15 s para no duplicarla.</p>
+        <div class="slots" id="slots" aria-label="Últimos 7 cuadros válidos"></div>
+        <div class="panel-cabeza"><span class="contador" id="contador"></span><button class="btn" id="leer" type="button">Leer un cuadro</button></div>
+        <div class="ultimo" id="ultimo" aria-live="polite"></div>
+        <div class="tabla-wrap">
+          <table>
+            <thead><tr><th>id</th><th>placa</th><th>sentido</th><th>momento</th><th>confianza</th></tr></thead>
+            <tbody id="accesos"><tr class="vacio"><td colspan="5">Sin registros todavía. Lee cuadros hasta que 4 coincidan.</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="nota-lab">El validador y la votación son el mismo algoritmo de <span class="mono">src/validator.py</span> portado a JavaScript. Las lecturas del panel derecho son simuladas; el OCR y la cámara no corren en el navegador.</p>
+  </div>
+</section>
+
+<section class="seccion" id="resultados">
+  <div class="wrap">
+    <div class="seccion-cabeza">
+      <h2>Lo que mide hoy el sistema</h2>
+      <p>Las 11 fotos de <span class="mono">data/samples</span> pasadas por el pipeline actual en CPU, con la placa verdadera leída a mano. Es el punto de partida; la columna “después” se llena al terminar las correcciones.</p>
+    </div>
+    <div class="cifras">
+      <div class="cifra"><span class="etiqueta">Pipeline completo</span><span class="valor mal-t">0<small> / 11</small></span><p>Placas leídas bien con el preprocesamiento actual.</p></div>
+      <div class="cifra"><span class="etiqueta">Sin preprocesar</span><span class="valor">4<small> / 11</small></span><p>El mismo recorte, solo escalado, directo a EasyOCR.</p></div>
+      <div class="cifra"><span class="etiqueta">Tiempo por foto</span><span class="valor">2.5–15.9<small> s</small></span><p>CPU, sin GPU. La meta del cliente es menos de 2.5 s.</p></div>
+      <div class="cifra"><span class="etiqueta">Detector</span><span class="valor">Sobel</span><p>Respaldo por bordes: el repositorio no tiene pesos YOLO entrenados.</p></div>
+    </div>
+    <div class="tabla-wrap">
+      <table>
+        <thead><tr><th>foto</th><th>placa real</th><th>sin preprocesar</th><th>con preprocesar</th><th>después</th></tr></thead>
+        <tbody id="tabla-res"></tbody>
+      </table>
+    </div>
+    <p class="pie-tabla">Medición preliminar del 27 de noviembre de 2026. Son 9 placas distintas (tres fotos son del mismo carro) y no forman un conjunto de prueba: el informe final usará fotos propias que el modelo no vio.</p>
+  </div>
+</section>
+
+<section class="seccion" id="limites">
+  <div class="wrap">
+    <div class="seccion-cabeza">
+      <h2>Dónde falla y por qué</h2>
+      <p>Tres casos reales de las pruebas, con la lectura que devolvió el sistema.</p>
+    </div>
+    <div class="fallas">
+      <figure class="falla">
+        <div class="etapa-img"><img src="../../website/img/fallas/cajas.webp" alt="Placa AHB 965 con 23 cajas ámbar del detector de respaldo" width="400" height="180"></div>
+        <figcaption><h3>Cajas por todas partes</h3><p>El detector de respaldo marcó 23 regiones en una foto que solo tiene una placa. Sin YOLO, cualquier zona con bordes verticales parece placa.</p><span class="lectura">23 cajas → ninguna lectura válida</span></figcaption>
+      </figure>
+      <figure class="falla">
+        <div class="etapa-img"><img src="../../website/img/fallas/placa-blanca.webp" alt="Taxi amarillo con placa blanca de servicio público WGL 451 de Cartagena" width="400" height="267"></div>
+        <figcaption><h3>Placa blanca de servicio público</h3><p>El fondo blanco y la carrocería amarilla confunden al umbral. La placa WGL451 se leyó como otra placa válida.</p><span class="lectura">WGL451 → AOG686 (sin preprocesar)</span></figcaption>
+      </figure>
+      <figure class="falla">
+        <div class="etapa-img"><img src="../../website/img/fallas/ciudad.webp" alt="Placa blanca SJS 444 de Dosquebradas" width="400" height="300"></div>
+        <figcaption><h3>La ciudad se pega a la placa</h3><p>La franja con el nombre del municipio entra en la misma caja y el OCR une las dos líneas en un solo texto.</p><span class="lectura">SJS444 → 9HSOUEDRADAS444</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="seccion" id="correr">
+  <div class="wrap">
+    <div class="seccion-cabeza">
+      <h2>Correr la consola de operación</h2>
+      <p>La consola es una app de Streamlit que corre en el equipo de la garita o en un contenedor. Este sitio es solo la presentación del proyecto.</p>
+    </div>
+    <div class="correr">
+      <div>
+        <h3>Con Docker</h3>
+<pre><span class="c"># construye e inicia en segundo plano</span>
+docker compose up -d --build
+<span class="c"># abre http://localhost:8501</span></pre>
+        <p>Los volúmenes <span class="mono">db/</span> y <span class="mono">data/</span> conservan los registros entre reinicios.</p>
+      </div>
+      <div>
+        <h3>En Linux Mint o Ubuntu</h3>
+<pre>git clone https://github.com/y0ner/smart-alpr-iot
+cd smart-alpr-iot
+./run.sh</pre>
+        <p><span class="mono">run.sh</span> crea el entorno virtual la primera vez e instala las dependencias.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="linea"><strong>Smart ALPR IoT</strong><span>Proyecto final de Visión Artificial · Ingeniería de Sistemas · Universidad de La Guajira</span></div>
+    <div class="linea"><span>Autor: Yoner Isaza</span><span>Docente: por confirmar</span><span>Licencia: por definir</span><span>Fotos de placas: fuente por citar</span></div>
+  </div>
+</footer>
+
+<div class="wrap">
+  <section class="notas" aria-labelledby="t-notas">
+    <h2 id="t-notas">Notas de la propuesta</h2>
+    <div class="notas-grid">
+      <div>
+        <h3>Qué se sube a Vercel</h3>
+        <p>Este sitio estático, en una carpeta <span class="mono">website/</span> del repo: HTML, CSS y JS sin paso de compilación. La consola Streamlit no puede vivir en Vercel: necesita un servidor encendido y PyTorch con EasyOCR pesan más que el límite de una función. Se queda en Docker o en local; si quieres un demo en vivo se puede montar aparte (Hugging Face Spaces) y enlazarlo desde aquí.</p>
+      </div>
+      <div>
+        <h3>Identidad</h3>
+        <p>Hereda la consola: su paleta oscura, JetBrains Mono para datos y verde, ámbar y rojo solo para estados. Suma el amarillo de la placa como material principal y Barlow Condensed para títulos, una letra basada en placas y señales viales. Claro por defecto (proyector y portátil de día); el oscuro es la paleta de la consola.</p>
+        <div class="muestras" aria-label="Colores">
+          <span class="muestra"><i style="background:#F2B705"></i>placa</span>
+          <span class="muestra"><i style="background:#14161B"></i>tinta</span>
+          <span class="muestra"><i style="background:#ECEEF1"></i>fondo claro</span>
+          <span class="muestra"><i style="background:#090A0F"></i>fondo oscuro</span>
+          <span class="muestra"><i style="background:#10B981"></i>válida</span>
+          <span class="muestra"><i style="background:#F59E0B"></i>pendiente</span>
+          <span class="muestra"><i style="background:#EF4444"></i>inválida</span>
+        </div>
+      </div>
+      <div>
+        <h3>Reglas del contenido</h3>
+        <ul>
+          <li>Cada número sale de una medición que se puede repetir con un script del repo. Nada estimado ni “proyectado”.</li>
+          <li>Las imágenes de las etapas las genera el propio pipeline, no se dibujan a mano.</li>
+          <li>Las fotos de terceros llevan su fuente y licencia; las propias, el lugar y la fecha.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Para que decidas</h3>
+        <ol>
+          <li><b>Portada con la placa gigante</b> y la caja de detección. ¿Sí?</li>
+          <li><b>Antes y después</b> visibles en el sitio público, o solo el resultado final.</li>
+          <li><b>Laboratorio</b>: solo el validador (ligero) o también el pipeline OpenCV en el navegador con OpenCV.js (unos 8 MB más).</li>
+          <li><b>Idioma</b>: solo español, o español e inglés con selector.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  // Tema: sistema → oscuro → claro
+  var raiz = document.documentElement;
+  var botonTema = document.getElementById("tema");
+  var estados = ["sistema", "oscuro", "claro"];
+  var actual = 0;
+  try { var g = localStorage.getItem("alpr-tema"); if (g) actual = Math.max(0, estados.indexOf(g)); } catch (e) {}
+  function aplicarTema() {
+    var t = estados[actual];
+    if (t === "sistema") raiz.removeAttribute("data-theme");
+    else raiz.setAttribute("data-theme", t === "oscuro" ? "dark" : "light");
+    botonTema.innerHTML = '<span class="largo">Tema: </span>' + t;
+    try { localStorage.setItem("alpr-tema", t); } catch (e) {}
+  }
+  botonTema.addEventListener("click", function () { actual = (actual + 1) % estados.length; aplicarTema(); });
+  aplicarTema();
+
+  // Port fiel de src/validator.py
+  var D2L = { "0": "O", "1": "I", "2": "Z", "5": "S", "6": "G", "8": "B", "4": "A" };
+  var L2D = { "O": "0", "Q": "0", "D": "0", "I": "1", "L": "1", "Z": "2", "S": "5", "B": "8", "G": "6", "A": "4" };
+  var P5 = { "O": "0", "Q": "0", "I": "1", "L": "1" };
+  var esD = function (c) { return /^[0-9]$/.test(c); };
+  var esA = function (c) { return /^[A-Z]$/.test(c); };
+  var ROLES = ["letra", "letra", "letra", "dígito", "dígito", "tipo"];
+
+  function validar(texto) {
+    var limpio = String(texto || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+    var r = { limpio: limpio, celdas: [], valida: false, tipo: "DESCONOCIDO", placa: limpio, motivo: "" };
+    if (limpio.length !== 6) {
+      r.motivo = "Tiene " + limpio.length + " caracteres; una placa tiene exactamente 6.";
+      return r;
+    }
+    var ch = limpio.split("");
+    r.celdas = ch.map(function (c) { return { antes: "", car: c, error: false }; });
+    for (var i = 0; i < 3; i++) {
+      if (esD(ch[i]) && D2L[ch[i]]) { r.celdas[i].antes = ch[i]; ch[i] = D2L[ch[i]]; r.celdas[i].car = ch[i]; }
+      else if (!esA(ch[i])) { r.celdas[i].error = true; r.motivo = "La posición " + (i + 1) + " debe ser letra y «" + ch[i] + "» no se parece a ninguna."; return r; }
+    }
+    for (var j = 3; j < 5; j++) {
+      if (esA(ch[j]) && L2D[ch[j]]) { r.celdas[j].antes = ch[j]; ch[j] = L2D[ch[j]]; r.celdas[j].car = ch[j]; }
+      else if (!esD(ch[j])) { r.celdas[j].error = true; r.motivo = "La posición " + (j + 1) + " debe ser dígito y «" + ch[j] + "» no se parece a ninguno."; return r; }
+    }
+    var c5 = ch[5];
+    if (P5[c5]) { r.celdas[5].antes = c5; ch[5] = P5[c5]; r.celdas[5].car = ch[5]; r.tipo = "CARRO"; }
+    else if (esD(c5)) { r.tipo = "CARRO"; }
+    else { r.tipo = "MOTO"; }
+    r.valida = true;
+    r.placa = ch.join("");
+    return r;
+  }
+
+  var entrada = document.getElementById("lectura");
+  var celdasEl = document.getElementById("celdas");
+  var pill = document.getElementById("pill");
+  var motivo = document.getElementById("motivo");
+  var mini = document.getElementById("mini-placa");
+
+  function pintarValidador() {
+    var r = validar(entrada.value);
+    var html = "";
+    for (var i = 0; i < 6; i++) {
+      var c = r.celdas[i];
+      var clase = "celda" + (!c ? " vacia" : c.error ? " error" : c.antes ? " cambio" : "");
+      html += '<div class="' + clase + '"><span class="rol">' + ROLES[i] + '</span><span class="car">' + (c ? c.car : "·") + '</span><span class="antes">' + (c && c.antes ? "era " + c.antes : "") + "</span></div>";
+    }
+    celdasEl.innerHTML = html;
+    if (r.valida) {
+      pill.className = "pill ok"; pill.textContent = r.tipo + " · válida";
+      var n = r.celdas.filter(function (c) { return c.antes; }).length;
+      motivo.textContent = n ? "Se corrigieron " + n + (n === 1 ? " carácter." : " caracteres.") : "Sin correcciones.";
+      mini.classList.remove("apagada");
+      document.getElementById("mp-l").textContent = r.placa.slice(0, 3);
+      document.getElementById("mp-n").textContent = r.placa.slice(3);
+      mini.setAttribute("aria-label", "Placa " + r.placa);
+    } else {
+      pill.className = "pill mal"; pill.textContent = "inválida";
+      motivo.textContent = r.motivo;
+      mini.classList.add("apagada");
+      mini.setAttribute("aria-label", "Sin placa válida");
+    }
+    return r;
+  }
+  entrada.addEventListener("input", pintarValidador);
+  document.querySelectorAll(".presets button").forEach(function (b) {
+    b.addEventListener("click", function () { entrada.value = b.getAttribute("data-v"); pintarValidador(); entrada.focus(); });
+  });
+
+  // Votación: PlateVoterBuffer(N=7, k=4, cooldown 15 s, confianza mínima 0.35)
+  var N = 7, K = 4, ESPERA = 15000, MINCONF = 0.35;
+  var buffer = [], emisiones = {}, ultimoSentido = {}, filas = [], cuadro = 0, idAcceso = 0;
+  var PARECIDOS = { "O": "0", "I": "1", "B": "8", "S": "5", "Z": "2", "G": "6", "A": "4", "0": "O", "1": "I", "8": "B", "5": "S", "2": "Z", "6": "G", "4": "A" };
+  var slotsEl = document.getElementById("slots"), contadorEl = document.getElementById("contador");
+  var ultimoEl = document.getElementById("ultimo"), accesosEl = document.getElementById("accesos");
+
+  function placaActual() { var r = validar(entrada.value); return r.valida ? r.placa : "UJR456"; }
+  function lecturaRuidosa(p, azar) {
+    var x = azar === undefined ? Math.random() : azar;
+    if (x < 0.5) return p;
+    if (x < 0.85) {
+      var pos = [], arr = p.split("");
+      arr.forEach(function (c, i) { if (PARECIDOS[c]) pos.push(i); });
+      if (!pos.length) return p;
+      var k = pos[Math.floor(Math.random() * pos.length)];
+      arr[k] = PARECIDOS[arr[k]];
+      return arr.join("");
+    }
+    return Math.random() < 0.5 ? p.slice(0, 5) : p.slice(0, 3) + "X" + p.slice(4);
+  }
+  function hora(d) { return d.toTimeString().slice(0, 8); }
+  function leer(azar, conf) {
+    var ahora = Date.now();
+    cuadro += 1;
+    var p = placaActual();
+    var bruto = lecturaRuidosa(p, azar);
+    var c = conf !== undefined ? conf : 0.3 + Math.random() * 0.65;
+    var r = validar(bruto);
+    var texto = "Cuadro " + cuadro + ": leyó <b>" + bruto + "</b> (" + c.toFixed(2) + ")";
+    if (!r.valida || c < MINCONF) {
+      ultimoEl.innerHTML = texto + " → descartado: " + (!r.valida ? "formato inválido" : "confianza menor a 0.35");
+      pintarVotos(null);
+      return;
+    }
+    buffer.push({ placa: r.placa, conf: c });
+    if (buffer.length > N) buffer.shift();
+    texto += r.placa !== bruto ? " → corregido a <b>" + r.placa + "</b>" : " → válido";
+    var cuenta = {};
+    buffer.forEach(function (o) { cuenta[o.placa] = (cuenta[o.placa] || 0) + 1; });
+    var top = null, votos = 0;
+    Object.keys(cuenta).forEach(function (k) { if (cuenta[k] > votos) { top = k; votos = cuenta[k]; } });
+    if (votos >= K) {
+      var previa = emisiones[top] || 0;
+      if (ahora - previa < ESPERA) {
+        texto += ". En espera: faltan " + Math.ceil((ESPERA - (ahora - previa)) / 1000) + " s para volver a registrar " + top + ".";
+      } else {
+        emisiones[top] = ahora;
+        var sentido = ultimoSentido[top] === "ENTRADA" ? "SALIDA" : "ENTRADA";
+        ultimoSentido[top] = sentido;
+        var apoyos = buffer.filter(function (o) { return o.placa === top; });
+        var media = apoyos.reduce(function (s, o) { return s + o.conf; }, 0) / apoyos.length;
+        idAcceso += 1;
+        filas.unshift({ id: idAcceso, placa: top, sentido: sentido, momento: hora(new Date(ahora)), conf: media });
+        texto += ". Consenso de " + votos + " votos: <b>" + sentido + "</b> registrada.";
+        pintarAccesos();
+      }
+    }
+    ultimoEl.innerHTML = texto;
+    pintarVotos(top);
+  }
+  function pintarVotos(top) {
+    var cuenta = {};
+    buffer.forEach(function (o) { cuenta[o.placa] = (cuenta[o.placa] || 0) + 1; });
+    if (!top) { var v = 0; Object.keys(cuenta).forEach(function (k) { if (cuenta[k] > v) { top = k; v = cuenta[k]; } }); }
+    var html = "";
+    for (var i = 0; i < N; i++) {
+      var o = buffer[i];
+      html += '<div class="slot' + (o ? " lleno" : "") + (o && o.placa === top && cuenta[top] >= K ? " gana" : "") + '">' + (o ? o.placa : "vacío") + "</div>";
+    }
+    slotsEl.innerHTML = html;
+    contadorEl.textContent = top ? top + ": " + cuenta[top] + " de " + K + " votos" : "0 de " + K + " votos";
+  }
+  function pintarAccesos() {
+    accesosEl.innerHTML = filas.slice(0, 6).map(function (f) {
+      return "<tr><td>" + f.id + "</td><td>" + f.placa + '</td><td class="' + (f.sentido === "ENTRADA" ? "si" : "") + '">' + f.sentido + "</td><td>" + f.momento + "</td><td>" + f.conf.toFixed(2) + "</td></tr>";
+    }).join("");
+  }
+  document.getElementById("leer").addEventListener("click", function () { leer(); });
+
+  // Resultados reales (medición preliminar)
+  var RES = [
+    ["placa_bogota_AGH430.jpg", "AGH430", "AGH430", "—"],
+    ["placa_bogota_AHB965.jpg", "AHB965", "—", "—"],
+    ["placa_bogota_BGL891.jpg", "AGH430", "AGH430", "AGI435"],
+    ["placa_bogota_CXM432.jpg", "AGH430", "AUH430", "AUH430"],
+    ["placa_cartagena_MKL184.jpg", "WGL451", "AOG686", "—"],
+    ["placa_dosquebradas_DJN338.jpg", "SJS444", "ISU544", "—"],
+    ["placa_itagui_LIL111.jpg", "TKI033", "TKI033", "—"],
+    ["placa_medellin_RHK088.jpg", "WHK086", "RHK086", "—"],
+    ["placa_popayan_PES382.jpg", "EMY923", "—", "—"],
+    ["placa_sevilla_WBI421.jpg", "NOJ122", "IVI22Y", "NOA122"],
+    ["placa_sonson_SGM480.jpg", "LFB645", "LFB645", "SOA50M"]
+  ];
+  document.getElementById("tabla-res").innerHTML = RES.map(function (f) {
+    function celda(v) { return v === "—" ? '<td class="pend">sin lectura</td>' : '<td class="' + (v === f[1] ? "si" : "no") + '">' + v + (v === f[1] ? " ✓" : " ✗") + "</td>"; }
+    return "<tr><td>" + f[0] + "</td><td>" + f[1] + "</td>" + celda(f[2]) + celda(f[3]) + '<td class="pend">pendiente</td></tr>';
+  }).join("");
+
+  // Estado inicial: validador con un ejemplo y tres cuadros ya leídos
+  pintarValidador();
+  leer(0.1, 0.82); leer(0.6, 0.74); leer(0.1, 0.88);
+})();
+</script>

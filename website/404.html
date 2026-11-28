@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title data-i18n="err404.title">404 · Smart ALPR IoT</title>
+  <meta name="theme-color" content="#ECEEF1" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#090A0F" media="(prefers-color-scheme: dark)">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="/css/estilos.css">
+</head>
+<body>
+  <nav class="nav" data-i18n-attr="aria-label:nav.aria_principal" aria-label="Principal">
+    <div class="wrap">
+      <a class="marca" href="/" data-i18n-attr="aria-label:nav.aria_inicio" aria-label="Smart ALPR IoT, inicio">
+        <span class="marca-placa">ALPR</span>
+        <span class="marca-texto">Smart ALPR IoT</span>
+      </a>
+      <div class="nav-links">
+        <a href="https://github.com/y0ner/smart-alpr-iot">GitHub</a>
+        <button class="idioma" id="idioma" type="button" data-i18n-attr="aria-label:nav.aria_idioma" aria-label="Cambiar idioma">
+          <span class="lang-opt" data-lang="es">ES</span><span aria-hidden="true"> · </span><span class="lang-opt" data-lang="en">EN</span>
+        </button>
+        <button class="tema" id="tema" type="button" data-i18n-attr="aria-label:nav.aria_tema" aria-label="Cambiar tema">
+          <span class="largo" data-i18n="nav.tema_prefijo">Tema: </span><span id="tema-valor" data-i18n="tema.sistema">sistema</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="seccion pagina-404">
+    <div class="wrap">
+      <p class="etiqueta" data-i18n="err404.etiqueta">Error 404</p>
+      <div class="placa-404">
+        <div class="mini-placa apagada" role="img" data-i18n-attr="aria-label:err404.placa_aria" aria-label="Placa no encontrada: 404">
+          <div class="placa-chars" aria-hidden="true"><span>ERR</span><span class="sello"></span><span>404</span></div>
+          <div class="placa-ciudad" aria-hidden="true">COLOMBIA</div>
+        </div>
+      </div>
+      <h1 data-i18n="err404.titulo">Esta ruta no existe en el sistema.</h1>
+      <p class="lead" data-i18n="err404.desc">El enlace puede estar roto o la página fue movida. Vuelve al inicio para explorar el pipeline, el validador colombiano y el laboratorio OpenCV.js.</p>
+      <div class="ctas">
+        <a class="btn primario" href="/" data-i18n="err404.volver">Volver al inicio</a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="linea"><strong>Smart ALPR IoT</strong><span data-i18n="pie.proyecto">Proyecto final de Visión Artificial · Ingeniería de Sistemas · Universidad de La Guajira</span></div>
+      <div class="linea"><span data-i18n="pie.autor">Autor: Yoner Isaza</span><span data-i18n="pie.docente">Docente: Eduardo Sierra Fragozo</span><span data-i18n="pie.licencia">Licencia: MIT</span><span data-i18n="pie.fuente">Fotos de muestra descargadas de internet: fuente pendiente de citar</span></div>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/principal.js"></script>
+</body>
+</html>

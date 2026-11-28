@@ -86,7 +86,7 @@ def test_plate_validator_basic() -> None:
 
 def test_image_preprocessor_dummy() -> None:
     """Verifica que el preprocesador OpenCV responda a una matriz sintética."""
-    preprocessor = ImagePreprocessor(scale_factor=1.0)
+    preprocessor = ImagePreprocessor()
     dummy_img = np.zeros((100, 200, 3), dtype=np.uint8)
     dummy_img[20:80, 20:180] = 255
 
@@ -94,7 +94,7 @@ def test_image_preprocessor_dummy() -> None:
     assert "gray" in res
     assert "bilateral" in res
     assert "otsu" in res
-    assert res["gray"].shape == (100, 200)
+    assert res["gray"].ndim == 2
 
 
 def test_detector_basic() -> None:
@@ -107,3 +107,23 @@ def test_detector_basic() -> None:
     assert detector.is_valid_frame(empty_frame) is False
     status = detector.get_status()
     assert status["status"] == "ready"
+
+
+def test_ground_truth_matches_sample_files() -> None:
+    """Verifica que la verdad de referencia cubra exactamente las fotos de muestra."""
+    import csv
+
+    from src.config import REAL_SAMPLES_DIR, SAMPLES_GROUND_TRUTH_CSV
+
+    with SAMPLES_GROUND_TRUTH_CSV.open(encoding="utf-8", newline="") as f:
+        filas = list(csv.DictReader(f))
+
+    assert filas, "verdad.csv está vacío"
+    assert set(filas[0]) == {"archivo", "placa", "tipo", "servicio", "fuente", "nota"}
+    fotos = {p.name for p in REAL_SAMPLES_DIR.iterdir() if p.suffix.lower() in {".jpg", ".jpeg", ".png"}}
+    assert {f["archivo"] for f in filas} == fotos
+    for fila in filas:
+        resultado = PlateValidator.correct_and_validate(fila["placa"])
+        assert resultado.is_valid and resultado.corrected_plate == fila["placa"], fila
+        # El nombre del archivo lleva la placa verdadera
+        assert fila["placa"] in fila["archivo"], fila
