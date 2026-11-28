@@ -25,7 +25,6 @@ SQLITE_DB_PATH: Final[Path] = DB_DIR / "smart_alpr.db"
 YOLO_MODEL_PATH: Final[Path] = MODELS_DIR / "best.pt"
 YOLO_CONF_THRESHOLD: Final[float] = 0.45
 CROP_MARGIN_RATIO: Final[float] = 0.12
-RESIZE_SCALE_FACTOR: Final[float] = 3.0  # obsoleto: lo reemplaza PLATE_NORMALIZED_HEIGHT_PX
 
 # Preprocesamiento (medido sobre las 11 fotos reales el 2026-11-27: con el recorte
 # llevado a 140 px de alto y en grises, EasyOCR acertó 6/11; a 120 px, 3/11; a 180 px, 5/11)
