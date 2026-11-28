@@ -145,7 +145,68 @@ export const etapas = {
       }
     }
   ],
-  "despues": null
+  "despues": [
+    {
+      "clave": "captura",
+      "img": "img/etapas/antes/01-captura.webp",
+      "ancho": 720,
+      "alto": 480,
+      "param": {
+        "es": "respaldo Sobel · NMS · máx. 5 cajas",
+        "en": "Sobel fallback · NMS · up to 5 boxes"
+      }
+    },
+    {
+      "clave": "recorte",
+      "img": "img/etapas/despues/02-recorte.webp",
+      "ancho": 360,
+      "alto": 176,
+      "param": {
+        "es": "margen 12 % · altura 140 px",
+        "en": "12% margin · 140 px height"
+      }
+    },
+    {
+      "clave": "grises",
+      "img": "img/etapas/despues/03-grises.webp",
+      "ancho": 360,
+      "alto": 176,
+      "param": {
+        "es": "Y = 0.299R + 0.587G + 0.114B · entrada del OCR",
+        "en": "Y = 0.299R + 0.587G + 0.114B · OCR input"
+      }
+    },
+    {
+      "clave": "bilateral",
+      "img": "img/etapas/despues/04-bilateral.webp",
+      "ancho": 360,
+      "alto": 176,
+      "param": {
+        "es": "d = 9 · σ color = 30 · σ espacio = 30",
+        "en": "d = 9 · σ color = 30 · σ space = 30"
+      }
+    },
+    {
+      "clave": "umbral",
+      "img": "img/etapas/despues/05-umbral.webp",
+      "ancho": 360,
+      "alto": 176,
+      "param": {
+        "es": "gaussiano · bloque 41 (0,3 × altura) · C = 9",
+        "en": "Gaussian · 41 block (0.3 × height) · C = 9"
+      }
+    },
+    {
+      "clave": "morfologia",
+      "img": "img/etapas/despues/06-morfologia.webp",
+      "ancho": 360,
+      "alto": 176,
+      "param": {
+        "es": "apertura 3 × 3 · cierre 3 × 2",
+        "en": "3 × 3 opening · 3 × 2 closing"
+      }
+    }
+  ]
 };
 
 export const medicion = {
@@ -196,7 +257,7 @@ export const medicion = {
         "sinPre": "AOG686",
         "conPre": null,
         "cajas": 8,
-        "ms": 14271.0
+        "ms": 14271
       },
       {
         "archivo": "placa_dosquebradas_SJS444.jpg",
@@ -248,5 +309,106 @@ export const medicion = {
       }
     ]
   },
-  "despues": null
+  "despues": {
+    "fecha": "2026-11-28",
+    "detector": "respaldo",
+    "total": 11,
+    "aciertosSinPre": 6,
+    "aciertosConPre": 6,
+    "cerSinPre": 0.3788,
+    "cerConPre": 0.3485,
+    "segundosMin": 0.4,
+    "segundosMax": 2.2,
+    "segundosMedia": 1.2,
+    "filas": [
+      {
+        "archivo": "placa_bogota_AGH430.jpg",
+        "placa": "AGH430",
+        "sinPre": "AGH430",
+        "conPre": "AGH430",
+        "cajas": 1,
+        "ms": 388.07
+      },
+      {
+        "archivo": "placa_bogota_AGH430_b.jpg",
+        "placa": "AGH430",
+        "sinPre": "AGH430",
+        "conPre": "AGH430",
+        "cajas": 3,
+        "ms": 1307.67
+      },
+      {
+        "archivo": "placa_bogota_AGH430_c.jpg",
+        "placa": "AGH430",
+        "sinPre": "AGH430",
+        "conPre": "AGH430",
+        "cajas": 3,
+        "ms": 1325.97
+      },
+      {
+        "archivo": "placa_bogota_AHB965.jpg",
+        "placa": "AHB965",
+        "sinPre": "STPC",
+        "conPre": "STFC",
+        "cajas": 5,
+        "ms": 1634.08
+      },
+      {
+        "archivo": "placa_cartagena_WGL451.jpg",
+        "placa": "WGL451",
+        "sinPre": "LOC10A",
+        "conPre": "LOC10A",
+        "cajas": 5,
+        "ms": 1709.62
+      },
+      {
+        "archivo": "placa_dosquebradas_SJS444.jpg",
+        "placa": "SJS444",
+        "sinPre": "SJS444",
+        "conPre": "ISU544",
+        "cajas": 1,
+        "ms": 363.62
+      },
+      {
+        "archivo": "placa_itagui_TKI033.jpg",
+        "placa": "TKI033",
+        "sinPre": "TKI033",
+        "conPre": "TKI033",
+        "cajas": 2,
+        "ms": 1157.59
+      },
+      {
+        "archivo": "placa_medellin_WHK086.jpg",
+        "placa": "WHK086",
+        "sinPre": "NHK086",
+        "conPre": "RHK086",
+        "cajas": 1,
+        "ms": 357.17
+      },
+      {
+        "archivo": "placa_popayan_EMY923.jpg",
+        "placa": "EMY923",
+        "sinPre": null,
+        "conPre": null,
+        "cajas": 5,
+        "ms": 2059.24
+      },
+      {
+        "archivo": "placa_sevilla_NOJ122.jpg",
+        "placa": "NOJ122",
+        "sinPre": "NOJ122",
+        "conPre": "NOJ122",
+        "cajas": 5,
+        "ms": 2188.78
+      },
+      {
+        "archivo": "placa_sonson_LFB645.jpg",
+        "placa": "LFB645",
+        "sinPre": "SON50N",
+        "conPre": "LFB645",
+        "cajas": 2,
+        "ms": 755.01
+      }
+    ]
+  }
 };
