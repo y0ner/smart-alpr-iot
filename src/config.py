@@ -58,6 +58,8 @@ SAMPLES_GROUND_TRUTH_CSV: Final[Path] = REAL_SAMPLES_DIR / "verdad.csv"
 
 # Detector de respaldo (sin pesos YOLO): candidatos por gradiente y morfología
 FALLBACK_ASPECT_RATIO_RANGE: Final[tuple[float, float]] = (1.6, 4.2)
+# Placa colombiana de automóvil: 33 × 16 cm
+PLATE_CAR_ASPECT_RATIO: Final[float] = 33.0 / 16.0
 FALLBACK_MIN_AREA_PX: Final[int] = 1200
 FALLBACK_MAX_CANDIDATES: Final[int] = 5
 FALLBACK_NMS_IOU: Final[float] = 0.3
