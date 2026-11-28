@@ -14,6 +14,9 @@ pydantic>=2.8.0
 
 # UI & Industrial Dashboard
 streamlit>=1.39.0
+# pyarrow >= 22 exige NumPy 2 y el proyecto usa NumPy 1.x (PyTorch CPU, EasyOCR):
+# sin este límite, st.dataframe falla con "pyarrow requires NumPy 2.0 or newer"
+pyarrow>=17.0,<22
 
 # Testing & Code Quality (Linting & Formatting)
 pytest>=8.3.0
