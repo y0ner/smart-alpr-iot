@@ -132,35 +132,40 @@ export function montarResultados({ obtenerIdioma }) {
     const base = medicion.antes;
     const despues = medicion.despues;
 
+    // Las tarjetas muestran la medición más reciente; si hay "después", citan el "antes".
+    const actual = despues || base;
+    const conAntes = (texto, valorAntes) =>
+      despues ? `${texto} ${traducir(idioma, "resultados.cifra_antes", { v: valorAntes })}` : texto;
+
     cifrasEl.replaceChildren();
-    const clasePre = base.aciertosConPre === 0 ? "mal-t" : "ok-t";
+    const clasePre = actual.aciertosConPre === 0 ? "mal-t" : "ok-t";
     cifrasEl.appendChild(
       crearTarjetaCifra(
         traducir(idioma, "resultados.cifra_pre_t"),
-        base.aciertosConPre,
-        ` / ${base.total}`,
-        traducir(idioma, "resultados.cifra_pre_d"),
+        actual.aciertosConPre,
+        ` / ${actual.total}`,
+        conAntes(traducir(idioma, "resultados.cifra_pre_d"), `${base.aciertosConPre} / ${base.total}`),
         clasePre
       )
     );
     cifrasEl.appendChild(
       crearTarjetaCifra(
         traducir(idioma, "resultados.cifra_sin_t"),
-        base.aciertosSinPre,
-        ` / ${base.total}`,
-        traducir(idioma, "resultados.cifra_sin_d")
+        actual.aciertosSinPre,
+        ` / ${actual.total}`,
+        conAntes(traducir(idioma, "resultados.cifra_sin_d"), `${base.aciertosSinPre} / ${base.total}`)
       )
     );
     cifrasEl.appendChild(
       crearTarjetaCifra(
         traducir(idioma, "resultados.cifra_tiempo_t"),
-        `${base.segundosMin}–${base.segundosMax}`,
+        `${actual.segundosMin}–${actual.segundosMax}`,
         " s",
-        traducir(idioma, "resultados.cifra_tiempo_d")
+        conAntes(traducir(idioma, "resultados.cifra_tiempo_d"), `${base.segundosMin}–${base.segundosMax} s`)
       )
     );
 
-    const esRespaldo = base.detector === "respaldo";
+    const esRespaldo = actual.detector === "respaldo";
     cifrasEl.appendChild(
       crearTarjetaCifra(
         traducir(idioma, "resultados.cifra_det_t"),
@@ -204,10 +209,9 @@ export function montarResultados({ obtenerIdioma }) {
       tablaEl.appendChild(tr);
     }
 
-    pieEl.textContent = traducir(idioma, "resultados.pie", {
-      fecha: base.fecha,
-      total: base.total
-    });
+    pieEl.textContent = despues
+      ? traducir(idioma, "resultados.pie_despues", { fecha: base.fecha, fechaD: despues.fecha, total: base.total })
+      : traducir(idioma, "resultados.pie", { fecha: base.fecha, total: base.total });
 
     const subInicio = document.querySelector('#resultados [data-i18n="resultados.sub_inicio"]');
     if (subInicio) {

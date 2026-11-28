@@ -53,7 +53,7 @@ export const TEXTOS = {
     "etapas.paso_10": "10 Registro en SQLite",
     "etapas.aviso_etiqueta": "Lo que muestra esta tira",
     "etapas.aviso_texto":
-      "En una placa de casi 900 px de alto, el bloque de 19 px solo encuentra bordes y las letras quedan huecas en las etapas 05 y 06. Por eso EasyOCR no lee la salida final. La corrección propuesta normaliza la altura del recorte antes de filtrar.",
+      "En una placa de casi 900 px de alto, el bloque de 19 px solo encontraba bordes y las letras quedaban huecas en las etapas 05 y 06; por eso EasyOCR no leía la salida final. La corrección lleva el recorte a 140 px de alto, usa un bloque proporcional (0,3 × altura) y entrega al OCR la imagen en grises. Pulsa «Después» para verlo.",
 
     "etapas.item.captura.titulo": "Captura y detección",
     "etapas.item.captura.que": "Si no hay pesos en models/best.pt, entra el respaldo por gradiente Sobel.",
@@ -185,11 +185,14 @@ export const TEXTOS = {
     "resultados.titulo": "Lo que mide hoy el sistema",
     "resultados.sub_inicio": "Las {n} fotos de ",
     "resultados.sub_fin":
-      " pasadas por el pipeline actual en CPU, con la placa verdadera leída a mano. Es el punto de partida; la columna \"después\" se llena al terminar las correcciones.",
+      " pasadas por el pipeline en CPU, con la placa verdadera leída a mano. Las columnas «sin» y «con preprocesar» son la medición inicial; «después» es el pipeline corregido.",
     "resultados.cifra_pre_t": "Pipeline completo",
-    "resultados.cifra_pre_d": "Placas leídas bien con el preprocesamiento actual.",
+    "resultados.cifra_pre_d": "Placas leídas bien por el pipeline completo, con preprocesamiento.",
+    "resultados.cifra_antes": "Antes de las correcciones: {v}.",
+    "resultados.pie_despues":
+      "Medición inicial del {fecha}; pipeline corregido medido el {fechaD} con src/benchmark_ab.py. Son {total} fotos de 9 placas distintas (tres son del mismo carro) y no forman un conjunto de prueba independiente: el informe final usará fotos propias que el modelo no vio.",
     "resultados.cifra_sin_t": "Sin preprocesar",
-    "resultados.cifra_sin_d": "El mismo recorte, solo escalado, directo a EasyOCR.",
+    "resultados.cifra_sin_d": "El recorte del detector, sin filtros, directo a EasyOCR.",
     "resultados.cifra_tiempo_t": "Tiempo por foto",
     "resultados.cifra_tiempo_d": "CPU, sin GPU. La meta del cliente es menos de 2.5 s.",
     "resultados.cifra_det_t": "Detector",
@@ -300,7 +303,7 @@ export const TEXTOS = {
     "etapas.paso_10": "10 SQLite logging",
     "etapas.aviso_etiqueta": "What this strip reveals",
     "etapas.aviso_texto":
-      "On a crop nearly 900 px tall, a fixed 19 px block only catches character edges, leaving hollow outlines in stages 05 and 06. That breaks EasyOCR. The fix normalizes crop height before filtering.",
+      "On a crop nearly 900 px tall, a fixed 19 px block only caught character edges, leaving hollow outlines in stages 05 and 06, so EasyOCR could not read the final output. The fix scales the crop to 140 px tall, sizes the block to 0.3 × height and feeds the grayscale image to the OCR. Press \"After\" to see it.",
 
     "etapas.item.captura.titulo": "Capture and detection",
     "etapas.item.captura.que": "When models/best.pt is absent, the Sobel-gradient fallback takes over.",
@@ -429,14 +432,17 @@ export const TEXTOS = {
     "cvlab.archivo_propio": "Local file: {nombre}",
     "cvlab.err_imagen": "Could not load the selected image.",
 
-    "resultados.titulo": "Current measured baseline",
+    "resultados.titulo": "What the system measures today",
     "resultados.sub_inicio": "All {n} photos in ",
     "resultados.sub_fin":
-      " evaluated through the CPU pipeline against manual ground truth. The \"after\" column fills in once the pipeline fixes are measured.",
+      " evaluated through the CPU pipeline against manual ground truth. The \"no preproc\" and \"with preproc\" columns are the initial measurement; \"after\" is the fixed pipeline.",
     "resultados.cifra_pre_t": "Full pipeline",
-    "resultados.cifra_pre_d": "Plates read accurately with the current preprocessing.",
+    "resultados.cifra_pre_d": "Plates read accurately by the full pipeline, with preprocessing.",
+    "resultados.cifra_antes": "Before the fixes: {v}.",
+    "resultados.pie_despues":
+      "Initial measurement on {fecha}; fixed pipeline measured on {fechaD} with src/benchmark_ab.py. Covers {total} photos across 9 distinct plates (three show the same car) and is not a held-out test set: final evaluation will use original photos unseen by the model.",
     "resultados.cifra_sin_t": "Raw crop",
-    "resultados.cifra_sin_d": "Same crop, upscaled only, passed straight to EasyOCR.",
+    "resultados.cifra_sin_d": "The detector crop, unfiltered, passed straight to EasyOCR.",
     "resultados.cifra_tiempo_t": "Time per photo",
     "resultados.cifra_tiempo_d": "CPU only, no GPU. Client target is under 2.5 s.",
     "resultados.cifra_det_t": "Detector",
